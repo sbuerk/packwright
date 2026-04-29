@@ -10,3 +10,6 @@ parameters:
     paths:
         - src/
         - tests/
+
+    excludePaths:
+        - tests/Functional/ExtEmConf/Fixtures
