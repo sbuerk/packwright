@@ -15,6 +15,8 @@ use SBReleaser\ExtEmConf\Enum\ResultState;
  * dropped or altered to satisfy the target TYPO3 version constraints.
  * `$droppedItems` lists each removed field as an informational `Issue`
  * with `IssueSeverity::WARNING`.
+ *
+ * @internal not part of public API
  */
 final readonly class NormalizationResult
 {

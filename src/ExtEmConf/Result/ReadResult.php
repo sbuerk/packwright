@@ -18,6 +18,8 @@ use SBReleaser\ExtEmConf\Enum\ResultState;
  * `$extEmConf` is `null` on `FAILURE`.
  *
  * @param list<Issue> $issues
+ *
+ * @internal not part of public API
  */
 final readonly class ReadResult
 {

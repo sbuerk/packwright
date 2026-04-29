@@ -15,6 +15,8 @@ namespace SBReleaser\ExtEmConf\Dto\Constraints;
  * directly in `foreach` and `count()` calls.
  *
  * @implements \IteratorAggregate<string, Dependency>
+ *
+ * @internal not part of public API
  */
 final readonly class DependencyCollection implements \Countable, \IteratorAggregate
 {

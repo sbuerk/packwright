@@ -15,6 +15,8 @@ use SBReleaser\ExtEmConf\Dto\Version;
  *
  * Used as part of the union type
  * `AllVersions|SingleVersion|VersionRange` on `Dependency::$version`.
+ *
+ * @internal not part of public API
  */
 final readonly class VersionRange
 {

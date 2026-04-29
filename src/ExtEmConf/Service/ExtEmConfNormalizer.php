@@ -24,6 +24,8 @@ use SBReleaser\ExtEmConf\Result\NormalizationResult;
  *
  * Without a target version only structurally invalid values are
  * removed (raw-string category/state, unknown properties).
+ *
+ * @internal not part of public API
  */
 final class ExtEmConfNormalizer
 {

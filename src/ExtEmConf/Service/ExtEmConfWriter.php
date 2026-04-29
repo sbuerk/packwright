@@ -22,6 +22,8 @@ use SBReleaser\ExtEmConf\Enum\State;
  * supported by that version are silently omitted. Unknown properties
  * are always omitted regardless of version. The returned string is
  * ready to be written directly to disk.
+ *
+ * @internal not part of public API
  */
 final class ExtEmConfWriter
 {

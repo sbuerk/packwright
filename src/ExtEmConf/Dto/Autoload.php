@@ -12,6 +12,8 @@ namespace SBReleaser\ExtEmConf\Dto;
  * stored on `ExtEmConf::$autoload` and `ExtEmConf::$autoloadDev`.
  *
  * @see https://docs.typo3.org/m/typo3/reference-coreapi/13.4/en-us/ExtensionArchitecture/FileStructure/ExtEmconf.html
+ *
+ * @internal not part of public API
  */
 final readonly class Autoload
 {

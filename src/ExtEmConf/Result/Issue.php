@@ -13,6 +13,8 @@ use SBReleaser\ExtEmConf\Enum\IssueSeverity;
  * `$path` is a dot-separated key path into the ext_emconf structure
  * (e.g. `constraints.depends.typo3`), or an empty string when the
  * issue applies to the file as a whole.
+ *
+ * @internal not part of public API
  */
 final readonly class Issue
 {

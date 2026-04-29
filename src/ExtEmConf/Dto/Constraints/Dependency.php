@@ -20,6 +20,8 @@ use SBReleaser\ExtEmConf\Enum\ConstraintVersionType;
  * - `ALL`     → `AllVersions`
  * - `VERSION` → `SingleVersion`
  * - `RANGE`   → `VersionRange`
+ *
+ * @internal not part of public API
  */
 final readonly class Dependency
 {

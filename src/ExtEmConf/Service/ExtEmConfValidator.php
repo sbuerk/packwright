@@ -18,6 +18,8 @@ use SBReleaser\ExtEmConf\Result\ValidationResult;
  * supplied, additional warnings are emitted for fields that are
  * deprecated or removed in that TYPO3 version. Without a target
  * version only general structural rules are applied.
+ *
+ * @internal not part of public API
  */
 final class ExtEmConfValidator
 {

@@ -11,6 +11,8 @@ namespace SBReleaser\ExtEmConf\Dto\Constraints;
  * Each group is represented by a `DependencyCollection`. The reader
  * maps `array<string, string>` maps to typed `Dependency` instances
  * via `AllVersions`, `SingleVersion`, or `VersionRange`.
+ *
+ * @internal not part of public API
  */
 final readonly class Constraints
 {

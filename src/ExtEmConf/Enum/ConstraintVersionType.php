@@ -9,6 +9,8 @@ namespace SBReleaser\ExtEmConf\Enum;
  *
  * Allows callers to branch on constraint type without instanceof checks
  * against the concrete VersionValue classes.
+ *
+ * @internal not part of public API
  */
 enum ConstraintVersionType
 {

@@ -11,6 +11,8 @@ namespace SBReleaser\ExtEmConf\Enum;
  * round-tripping files that contain unknown state strings.
  *
  * @see https://docs.typo3.org/m/typo3/reference-coreapi/13.4/en-us/ExtensionArchitecture/FileStructure/ExtEmconf.html
+ *
+ * @internal not part of public API
  */
 enum State: string
 {

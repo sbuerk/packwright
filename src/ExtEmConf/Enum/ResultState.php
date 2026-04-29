@@ -11,6 +11,8 @@ namespace SBReleaser\ExtEmConf\Enum;
  * The state is derived from the highest severity issue collected during
  * the operation: no issues → SUCCESS, only warnings → WARNING, any
  * error → FAILURE.
+ *
+ * @internal not part of public API
  */
 enum ResultState
 {

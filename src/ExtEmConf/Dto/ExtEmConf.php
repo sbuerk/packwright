@@ -26,6 +26,8 @@ use SBReleaser\ExtEmConf\Enum\State;
  * normalizer and writer ignore them entirely.
  *
  * @see https://docs.typo3.org/m/typo3/reference-coreapi/13.4/en-us/ExtensionArchitecture/FileStructure/ExtEmconf.html
+ *
+ * @internal not part of public API
  */
 final readonly class ExtEmConf
 {

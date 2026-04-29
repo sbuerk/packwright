@@ -18,6 +18,8 @@ use Composer\Semver\VersionParser;
  *
  * Implements `Stringable` with the default `x.y.z` representation.
  * Alternative formats are available via `format()`.
+ *
+ * @internal not part of public API
  */
 final readonly class Version implements \Stringable
 {

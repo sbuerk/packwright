@@ -30,6 +30,8 @@ use SBReleaser\ExtEmConf\Result\ReadResult;
  * `include`, with `$_EXTKEY` set to a sentinel value so that the
  * populated `$EM_CONF[$_EXTKEY]` entry can be extracted safely.
  * Any `\Throwable` thrown during inclusion produces a FAILURE result.
+ *
+ * @internal not part of public API
  */
 final class ExtEmConfReader
 {

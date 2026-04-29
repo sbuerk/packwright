@@ -14,6 +14,8 @@ use SBReleaser\ExtEmConf\Enum\ResultState;
  * warnings were produced, `FAILURE` when at least one error was found.
  *
  * The DTO is never modified by the validator.
+ *
+ * @internal not part of public API
  */
 final readonly class ValidationResult
 {
