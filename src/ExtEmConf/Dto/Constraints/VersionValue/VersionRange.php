@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SBReleaser\ExtEmConf\Dto\Constraints\VersionValue;
 
 use SBReleaser\ExtEmConf\Dto\Version;
+use SBReleaser\ExtEmConf\Enum\VersionFormat;
 
 /**
  * Represents an inclusive version range constraint for a dependency.
@@ -18,10 +19,15 @@ use SBReleaser\ExtEmConf\Dto\Version;
  *
  * @internal not part of public API
  */
-final readonly class VersionRange
+final readonly class VersionRange implements VersionValueInterface
 {
     public function __construct(
         public Version $lowest,
         public Version $highest,
     ) {}
+
+    public function toVersionString(): string
+    {
+        return $this->lowest->format(VersionFormat::XYZ) . '-' . $this->highest->format(VersionFormat::XYZ);
+    }
 }

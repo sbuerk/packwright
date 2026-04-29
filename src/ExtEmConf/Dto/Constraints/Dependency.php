@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace SBReleaser\ExtEmConf\Dto\Constraints;
 
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\VersionRange;
+use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\VersionValueInterface;
 use SBReleaser\ExtEmConf\Enum\ConstraintVersionType;
 
 /**
@@ -31,6 +29,6 @@ final readonly class Dependency
     public function __construct(
         public string $extensionKey,
         public ConstraintVersionType $versionType,
-        public AllVersions|SingleVersion|VersionRange $version,
+        public VersionValueInterface $version,
     ) {}
 }

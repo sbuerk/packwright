@@ -15,7 +15,12 @@ namespace SBReleaser\ExtEmConf\Dto\Constraints\VersionValue;
  *
  * @internal not part of public API
  */
-final readonly class AllVersions
+final readonly class AllVersions implements VersionValueInterface
 {
     public function __construct() {}
+
+    public function toVersionString(): string
+    {
+        return '';
+    }
 }

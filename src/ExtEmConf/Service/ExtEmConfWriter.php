@@ -7,14 +7,11 @@ namespace SBReleaser\ExtEmConf\Service;
 use SBReleaser\ExtEmConf\Dto\Autoload;
 use SBReleaser\ExtEmConf\Dto\Constraints\Constraints;
 use SBReleaser\ExtEmConf\Dto\Constraints\DependencyCollection;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\VersionRange;
+use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\VersionValueInterface;
 use SBReleaser\ExtEmConf\Dto\ExtEmConf;
 use SBReleaser\ExtEmConf\Dto\Version;
 use SBReleaser\ExtEmConf\Enum\Category;
 use SBReleaser\ExtEmConf\Enum\State;
-use SBReleaser\ExtEmConf\Enum\VersionFormat;
 
 /**
  * Generates `ext_emconf.php` file content from an `ExtEmConf` DTO.
@@ -153,13 +150,9 @@ final class ExtEmConfWriter
         return $result;
     }
 
-    private function versionValueToString(AllVersions|SingleVersion|VersionRange $version): string
+    private function versionValueToString(VersionValueInterface $version): string
     {
-        return match (true) {
-            $version instanceof AllVersions => '',
-            $version instanceof SingleVersion => $version->version->format(VersionFormat::XYZ),
-            default => $version->lowest->format(VersionFormat::XYZ) . '-' . $version->highest->format(VersionFormat::XYZ),
-        };
+        return $version->toVersionString();
     }
 
     /**

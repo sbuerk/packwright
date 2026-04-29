@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SBReleaser\ExtEmConf\Dto\Constraints\VersionValue;
 
 use SBReleaser\ExtEmConf\Dto\Version;
+use SBReleaser\ExtEmConf\Enum\VersionFormat;
 
 /**
  * Represents a dependency version constraint pinned to a single version.
@@ -17,9 +18,14 @@ use SBReleaser\ExtEmConf\Dto\Version;
  *
  * @internal not part of public API
  */
-final readonly class SingleVersion
+final readonly class SingleVersion implements VersionValueInterface
 {
     public function __construct(
         public Version $version,
     ) {}
+
+    public function toVersionString(): string
+    {
+        return $this->version->format(VersionFormat::XYZ);
+    }
 }

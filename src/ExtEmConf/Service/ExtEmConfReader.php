@@ -11,6 +11,7 @@ use SBReleaser\ExtEmConf\Dto\Constraints\DependencyCollection;
 use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
 use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
 use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\VersionRange;
+use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\VersionValueInterface;
 use SBReleaser\ExtEmConf\Dto\ExtEmConf;
 use SBReleaser\ExtEmConf\Dto\Version;
 use SBReleaser\ExtEmConf\Enum\Category;
@@ -319,7 +320,7 @@ final class ExtEmConfReader
         string $raw,
         string $path,
         array &$issues,
-    ): AllVersions|SingleVersion|VersionRange {
+    ): VersionValueInterface {
         $trimmed = trim($raw);
 
         if ($trimmed === '' || $trimmed === '*') {
