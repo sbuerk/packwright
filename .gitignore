@@ -15,6 +15,9 @@
 # php-cs-fixer cache
 /.php-cs-fixer.cache
 
+# PHPStan cache
+/.cache/phpstan/
+
 # Claude Code
 /.claude/
 

@@ -31,6 +31,24 @@ Fix all violations automatically:
 composer cs:fix
 ```
 
+## Static Analysis
+
+This project uses [PHPStan](https://phpstan.org/) at level 8 for static
+analysis. Run it after applying code style fixes:
+
+```bash
+composer php:analyze
+```
+
+When intentional deviations from the rules are introduced, regenerate the
+baseline to record them:
+
+```bash
+composer php:analyze:generate-baseline
+```
+
+Commit the updated `phpstan-baseline.neon` alongside the code change.
+
 ## Testing
 
 Run the complete test suite:

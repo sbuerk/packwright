@@ -1,0 +1,13 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Instantiated class SBReleaserContainer not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Kernel.php
+
+		-
+			message: '#^Method SBReleaser\\Kernel\:\:createContainer\(\) should return Symfony\\Component\\DependencyInjection\\ContainerInterface but returns SBReleaserContainer\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Kernel.php

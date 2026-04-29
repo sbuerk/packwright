@@ -18,6 +18,7 @@
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.95",
         "humbug/box": "^4.7",
+        "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^11.5",
         "symfony/phpunit-bridge": "^7.4"
     },
@@ -34,6 +35,8 @@
     "scripts": {
         "cs:check": "${PHP_BINARY} vendor/bin/php-cs-fixer fix --dry-run --diff",
         "cs:fix": "${PHP_BINARY} vendor/bin/php-cs-fixer fix",
+        "php:analyze": "${PHP_BINARY} vendor/bin/phpstan analyze",
+        "php:analyze:generate-baseline": "${PHP_BINARY} vendor/bin/phpstan analyze --generate-baseline phpstan-baseline.neon",
         "test": "${PHP_BINARY} vendor/bin/phpunit",
         "test:unit": "${PHP_BINARY} vendor/bin/phpunit --testsuite unit",
         "test:functional": "${PHP_BINARY} vendor/bin/phpunit --testsuite functional",
@@ -46,6 +49,8 @@
     "scripts-descriptions": {
         "cs:check": "Check coding guidelines (dry-run, shows diff but does not modify files)",
         "cs:fix": "Fix coding guideline violations automatically",
+        "php:analyze": "Run PHPStan static analysis",
+        "php:analyze:generate-baseline": "Regenerate the PHPStan baseline from current findings",
         "test": "Run the complete test suite (unit + functional)",
         "test:unit": "Run unit tests only",
         "test:functional": "Run functional (integration) tests only",
