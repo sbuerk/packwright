@@ -16,6 +16,7 @@ use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\VersionRange;
 use SBReleaser\ExtEmConf\Dto\ExtEmConf;
 use SBReleaser\ExtEmConf\Dto\Version;
 use SBReleaser\ExtEmConf\Enum\Category;
+use SBReleaser\ExtEmConf\Enum\Typo3Version;
 use SBReleaser\ExtEmConf\Enum\ConstraintVersionType;
 use SBReleaser\ExtEmConf\Enum\ResultState;
 use SBReleaser\ExtEmConf\Enum\State;
@@ -118,7 +119,7 @@ final class ExtEmConfWriterTest extends TestCase
             clearCacheOnLoad: false,
         );
 
-        $output = $this->writer->generate($dto, Version::fromString('13.4.0'));
+        $output = $this->writer->generate($dto, Typo3Version::V13);
 
         self::assertStringNotContainsString('clearCacheOnLoad', $output);
     }
@@ -133,7 +134,7 @@ final class ExtEmConfWriterTest extends TestCase
             clearCacheOnLoad: true,
         );
 
-        $output = $this->writer->generate($dto, Version::fromString('11.5.0'));
+        $output = $this->writer->generate($dto, Typo3Version::V11);
 
         self::assertStringContainsString("'clearCacheOnLoad' => true, // @deprecated", $output);
     }
@@ -254,13 +255,13 @@ final class ExtEmConfWriterTest extends TestCase
         self::assertSame(ResultState::SUCCESS, $readResult->state);
         self::assertNotNull($readResult->extEmConf);
 
-        $validationResult = $validator->validate($readResult->extEmConf, Version::fromString('13.4.0'));
+        $validationResult = $validator->validate($readResult->extEmConf, Typo3Version::V13);
         self::assertSame(ResultState::SUCCESS, $validationResult->state);
 
-        $normResult = $normalizer->normalize($readResult->extEmConf, Version::fromString('13.4.0'));
+        $normResult = $normalizer->normalize($readResult->extEmConf, Typo3Version::V13);
         self::assertFalse($normResult->hasChanges);
 
-        $output = $writer->generate($normResult->extEmConf, Version::fromString('13.4.0'));
+        $output = $writer->generate($normResult->extEmConf, Typo3Version::V13);
         self::assertStringContainsString("'title' => 'V13 Full Extension'", $output);
         self::assertStringContainsString("'typo3' => '13.4.0-13.4.99'", $output);
         self::assertStringNotContainsString('clearCacheOnLoad', $output);
@@ -277,10 +278,10 @@ final class ExtEmConfWriterTest extends TestCase
         $readResult = $reader->read($this->fixtureFile('deprecated_keys'));
         self::assertNotNull($readResult->extEmConf);
 
-        $normResult = $normalizer->normalize($readResult->extEmConf, Version::fromString('13.4.0'));
+        $normResult = $normalizer->normalize($readResult->extEmConf, Typo3Version::V13);
         self::assertTrue($normResult->hasChanges);
 
-        $output = $writer->generate($normResult->extEmConf, Version::fromString('13.4.0'));
+        $output = $writer->generate($normResult->extEmConf, Typo3Version::V13);
         self::assertStringNotContainsString('clearCacheOnLoad', $output);
         self::assertStringNotContainsString('uploadfolder', $output);
         self::assertStringNotContainsString('createDirs', $output);

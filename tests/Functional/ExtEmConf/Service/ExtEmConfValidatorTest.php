@@ -7,11 +7,11 @@ namespace SBReleaser\Tests\Functional\ExtEmConf\Service;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SBReleaser\ExtEmConf\Dto\ExtEmConf;
-use SBReleaser\ExtEmConf\Dto\Version;
 use SBReleaser\ExtEmConf\Enum\Category;
 use SBReleaser\ExtEmConf\Enum\IssueSeverity;
 use SBReleaser\ExtEmConf\Enum\ResultState;
 use SBReleaser\ExtEmConf\Enum\State;
+use SBReleaser\ExtEmConf\Enum\Typo3Version;
 use SBReleaser\ExtEmConf\Service\ExtEmConfValidator;
 
 final class ExtEmConfValidatorTest extends TestCase
@@ -144,7 +144,7 @@ final class ExtEmConfValidatorTest extends TestCase
     public function validateDeprecatedClearCacheOnLoadWithTargetV13ReturnsWarning(): void
     {
         $dto = $this->validDto(['clearCacheOnLoad' => false]);
-        $result = $this->validator->validate($dto, Version::fromString('13.4.0'));
+        $result = $this->validator->validate($dto, Typo3Version::V13);
 
         self::assertSame(ResultState::WARNING, $result->state);
         $warnPaths = array_map(static fn($i) => $i->path, $result->issues);

@@ -9,9 +9,9 @@ use SBReleaser\ExtEmConf\Dto\Constraints\Constraints;
 use SBReleaser\ExtEmConf\Dto\Constraints\DependencyCollection;
 use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\VersionValueInterface;
 use SBReleaser\ExtEmConf\Dto\ExtEmConf;
-use SBReleaser\ExtEmConf\Dto\Version;
 use SBReleaser\ExtEmConf\Enum\Category;
 use SBReleaser\ExtEmConf\Enum\State;
+use SBReleaser\ExtEmConf\Enum\Typo3Version;
 
 /**
  * Generates `ext_emconf.php` file content from an `ExtEmConf` DTO.
@@ -25,7 +25,7 @@ use SBReleaser\ExtEmConf\Enum\State;
  */
 final class ExtEmConfWriter
 {
-    public function generate(ExtEmConf $extEmConf, ?Version $targetTypo3Version = null): string
+    public function generate(ExtEmConf $extEmConf, ?Typo3Version $targetTypo3Version = null): string
     {
         $body = '';
 
@@ -173,21 +173,13 @@ final class ExtEmConfWriter
         return $result;
     }
 
-    private function shouldOutputClearCacheOnLoad(?Version $targetTypo3Version): bool
+    private function shouldOutputClearCacheOnLoad(?Typo3Version $targetTypo3Version): bool
     {
-        if ($targetTypo3Version === null) {
-            return true;
-        }
-
-        if ($targetTypo3Version->major < 12) {
-            return true;
-        }
-
-        return $targetTypo3Version->major === 12 && $targetTypo3Version->minor < 1;
+        return $targetTypo3Version === null || $targetTypo3Version->value < 12;
     }
 
-    private function shouldOutputV8OnlyFields(?Version $targetTypo3Version): bool
+    private function shouldOutputV8OnlyFields(?Typo3Version $targetTypo3Version): bool
     {
-        return $targetTypo3Version === null || $targetTypo3Version->major < 9;
+        return $targetTypo3Version === null || $targetTypo3Version->value < 9;
     }
 }

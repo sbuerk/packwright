@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SBReleaser\ExtEmConf\Service;
 
 use SBReleaser\ExtEmConf\Dto\ExtEmConf;
-use SBReleaser\ExtEmConf\Dto\Version;
 use SBReleaser\ExtEmConf\Enum\Category;
+use SBReleaser\ExtEmConf\Enum\Typo3Version;
 use SBReleaser\ExtEmConf\Enum\IssueSeverity;
 use SBReleaser\ExtEmConf\Enum\ResultState;
 use SBReleaser\ExtEmConf\Enum\State;
@@ -29,7 +29,7 @@ use SBReleaser\ExtEmConf\Result\NormalizationResult;
  */
 final class ExtEmConfNormalizer
 {
-    public function normalize(ExtEmConf $extEmConf, ?Version $targetTypo3Version = null): NormalizationResult
+    public function normalize(ExtEmConf $extEmConf, ?Typo3Version $targetTypo3Version = null): NormalizationResult
     {
         $droppedItems = [];
 
@@ -114,14 +114,14 @@ final class ExtEmConfNormalizer
      */
     private function normalizeClearCacheOnLoad(
         ExtEmConf $extEmConf,
-        ?Version $targetTypo3Version,
+        ?Typo3Version $targetTypo3Version,
         array &$droppedItems,
     ): ?bool {
         if ($extEmConf->clearCacheOnLoad === null) {
             return null;
         }
 
-        if ($targetTypo3Version !== null && $this->isAtLeast($targetTypo3Version, 12, 1)) {
+        if ($targetTypo3Version !== null && $targetTypo3Version->value >= 12) {
             $droppedItems[] = new Issue(
                 path: 'clearCacheOnLoad',
                 message: 'Dropped deprecated field "clearCacheOnLoad" (deprecated since TYPO3 12.1).',
@@ -139,14 +139,14 @@ final class ExtEmConfNormalizer
      */
     private function normalizeUploadfolder(
         ExtEmConf $extEmConf,
-        ?Version $targetTypo3Version,
+        ?Typo3Version $targetTypo3Version,
         array &$droppedItems,
     ): ?bool {
         if ($extEmConf->uploadfolder === null) {
             return null;
         }
 
-        if ($targetTypo3Version !== null && $targetTypo3Version->major >= 9) {
+        if ($targetTypo3Version !== null && $targetTypo3Version->value >= 9) {
             $droppedItems[] = new Issue(
                 path: 'uploadfolder',
                 message: 'Dropped deprecated field "uploadfolder" (deprecated since TYPO3 9.5).',
@@ -164,14 +164,14 @@ final class ExtEmConfNormalizer
      */
     private function normalizeCreateDirs(
         ExtEmConf $extEmConf,
-        ?Version $targetTypo3Version,
+        ?Typo3Version $targetTypo3Version,
         array &$droppedItems,
     ): ?string {
         if ($extEmConf->createDirs === null) {
             return null;
         }
 
-        if ($targetTypo3Version !== null && $targetTypo3Version->major >= 9) {
+        if ($targetTypo3Version !== null && $targetTypo3Version->value >= 9) {
             $droppedItems[] = new Issue(
                 path: 'createDirs',
                 message: 'Dropped deprecated field "createDirs" (deprecated since TYPO3 9.5).',
@@ -182,14 +182,5 @@ final class ExtEmConfNormalizer
         }
 
         return $extEmConf->createDirs;
-    }
-
-    private function isAtLeast(Version $version, int $major, int $minor): bool
-    {
-        if ($version->major > $major) {
-            return true;
-        }
-
-        return $version->major === $major && $version->minor >= $minor;
     }
 }

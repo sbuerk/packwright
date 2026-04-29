@@ -7,9 +7,9 @@ namespace SBReleaser\Tests\Functional\ExtEmConf\Service;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SBReleaser\ExtEmConf\Dto\ExtEmConf;
-use SBReleaser\ExtEmConf\Dto\Version;
 use SBReleaser\ExtEmConf\Enum\Category;
 use SBReleaser\ExtEmConf\Enum\State;
+use SBReleaser\ExtEmConf\Enum\Typo3Version;
 use SBReleaser\ExtEmConf\Service\ExtEmConfNormalizer;
 
 final class ExtEmConfNormalizerTest extends TestCase
@@ -99,7 +99,7 @@ final class ExtEmConfNormalizerTest extends TestCase
     public function normalizeDropsUploadfolderForTargetV9(): void
     {
         $dto = $this->baseDto(['uploadfolder' => false]);
-        $result = $this->normalizer->normalize($dto, Version::fromString('9.5.0'));
+        $result = $this->normalizer->normalize($dto, Typo3Version::V9);
 
         self::assertTrue($result->hasChanges);
         self::assertNull($result->extEmConf->uploadfolder);
@@ -112,7 +112,7 @@ final class ExtEmConfNormalizerTest extends TestCase
     public function normalizeKeepsUploadfolderForTargetV8(): void
     {
         $dto = $this->baseDto(['uploadfolder' => false]);
-        $result = $this->normalizer->normalize($dto, Version::fromString('8.7.0'));
+        $result = $this->normalizer->normalize($dto, Typo3Version::V8);
 
         self::assertFalse($result->hasChanges);
         self::assertFalse($result->extEmConf->uploadfolder);
@@ -122,17 +122,17 @@ final class ExtEmConfNormalizerTest extends TestCase
     public function normalizeDropsCreateDirsForTargetV9(): void
     {
         $dto = $this->baseDto(['createDirs' => 'uploads/my_ext']);
-        $result = $this->normalizer->normalize($dto, Version::fromString('9.5.0'));
+        $result = $this->normalizer->normalize($dto, Typo3Version::V9);
 
         self::assertTrue($result->hasChanges);
         self::assertNull($result->extEmConf->createDirs);
     }
 
     #[Test]
-    public function normalizeDropsClearCacheOnLoadForTargetV121(): void
+    public function normalizeDropsClearCacheOnLoadForTargetV12(): void
     {
         $dto = $this->baseDto(['clearCacheOnLoad' => false]);
-        $result = $this->normalizer->normalize($dto, Version::fromString('12.1.0'));
+        $result = $this->normalizer->normalize($dto, Typo3Version::V12);
 
         self::assertTrue($result->hasChanges);
         self::assertNull($result->extEmConf->clearCacheOnLoad);
@@ -142,10 +142,10 @@ final class ExtEmConfNormalizerTest extends TestCase
     }
 
     #[Test]
-    public function normalizeKeepsClearCacheOnLoadForTargetV120(): void
+    public function normalizeKeepsClearCacheOnLoadForTargetV11(): void
     {
         $dto = $this->baseDto(['clearCacheOnLoad' => false]);
-        $result = $this->normalizer->normalize($dto, Version::fromString('12.0.0'));
+        $result = $this->normalizer->normalize($dto, Typo3Version::V11);
 
         self::assertFalse($result->hasChanges);
         self::assertFalse($result->extEmConf->clearCacheOnLoad);
@@ -155,7 +155,7 @@ final class ExtEmConfNormalizerTest extends TestCase
     public function normalizeDropsClearCacheOnLoadForTargetV13(): void
     {
         $dto = $this->baseDto(['clearCacheOnLoad' => true]);
-        $result = $this->normalizer->normalize($dto, Version::fromString('13.4.0'));
+        $result = $this->normalizer->normalize($dto, Typo3Version::V13);
 
         self::assertTrue($result->hasChanges);
         self::assertNull($result->extEmConf->clearCacheOnLoad);

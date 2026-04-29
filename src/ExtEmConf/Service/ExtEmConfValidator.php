@@ -7,6 +7,7 @@ namespace SBReleaser\ExtEmConf\Service;
 use SBReleaser\ExtEmConf\Dto\ExtEmConf;
 use SBReleaser\ExtEmConf\Dto\Version;
 use SBReleaser\ExtEmConf\Enum\IssueSeverity;
+use SBReleaser\ExtEmConf\Enum\Typo3Version;
 use SBReleaser\ExtEmConf\Enum\ResultState;
 use SBReleaser\ExtEmConf\Result\Issue;
 use SBReleaser\ExtEmConf\Result\ValidationResult;
@@ -23,7 +24,7 @@ use SBReleaser\ExtEmConf\Result\ValidationResult;
  */
 final class ExtEmConfValidator
 {
-    public function validate(ExtEmConf $extEmConf, ?Version $targetTypo3Version = null): ValidationResult
+    public function validate(ExtEmConf $extEmConf, ?Typo3Version $targetTypo3Version = null): ValidationResult
     {
         $issues = [];
 
@@ -170,10 +171,10 @@ final class ExtEmConfValidator
      */
     private function validateDeprecatedFields(
         ExtEmConf $extEmConf,
-        Version $targetTypo3Version,
+        Typo3Version $targetTypo3Version,
         array &$issues,
     ): void {
-        if ($extEmConf->uploadfolder !== null && $targetTypo3Version->major >= 9) {
+        if ($extEmConf->uploadfolder !== null && $targetTypo3Version->value >= 9) {
             $issues[] = new Issue(
                 path: 'uploadfolder',
                 message: 'Field "uploadfolder" is deprecated since TYPO3 9.5 and should be removed.',
@@ -181,7 +182,7 @@ final class ExtEmConfValidator
             );
         }
 
-        if ($extEmConf->createDirs !== null && $targetTypo3Version->major >= 9) {
+        if ($extEmConf->createDirs !== null && $targetTypo3Version->value >= 9) {
             $issues[] = new Issue(
                 path: 'createDirs',
                 message: 'Field "createDirs" is deprecated since TYPO3 9.5 and should be removed.',
@@ -189,21 +190,12 @@ final class ExtEmConfValidator
             );
         }
 
-        if ($extEmConf->clearCacheOnLoad !== null && $this->isAtLeast($targetTypo3Version, 12, 1)) {
+        if ($extEmConf->clearCacheOnLoad !== null && $targetTypo3Version->value >= 12) {
             $issues[] = new Issue(
                 path: 'clearCacheOnLoad',
                 message: 'Field "clearCacheOnLoad" is deprecated since TYPO3 12.1 and should be removed.',
                 severity: IssueSeverity::WARNING,
             );
         }
-    }
-
-    private function isAtLeast(Version $version, int $major, int $minor): bool
-    {
-        if ($version->major > $major) {
-            return true;
-        }
-
-        return $version->major === $major && $version->minor >= $minor;
     }
 }
