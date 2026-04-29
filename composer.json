@@ -1,0 +1,53 @@
+{
+    "name": "sbuerk/versflow",
+    "description": "sb-releaser — a PHP CLI tool",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Stefan Bürk",
+            "email": "stefan@buerk.tech"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "symfony/config": "^7.4",
+        "symfony/console": "^7.4",
+        "symfony/dependency-injection": "^7.4"
+    },
+    "require-dev": {
+        "humbug/box": "^4.7",
+        "phpunit/phpunit": "^11.5",
+        "symfony/phpunit-bridge": "^7.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "SBReleaser\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SBReleaser\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:unit": "phpunit --testsuite unit",
+        "test:functional": "phpunit --testsuite functional",
+        "dump-container": "php bin/dump-container",
+        "build": [
+            "@dump-container",
+            "vendor/bin/box compile"
+        ]
+    },
+    "scripts-descriptions": {
+        "test": "Run the complete test suite (unit + functional)",
+        "test:unit": "Run unit tests only",
+        "test:functional": "Run functional (integration) tests only",
+        "dump-container": "Compile and dump the DI container to a PHP class for PHAR embedding",
+        "build": "Compile the DI container then build the self-contained PHAR binary (build/sb-releaser)"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

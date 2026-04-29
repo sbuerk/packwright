@@ -1,0 +1,23 @@
+{
+    "main": "bin/sb-releaser",
+    "output": "build/sb-releaser",
+    "chmod": "0755",
+    "compression": "GZ",
+    "directories": [
+        "src",
+        "config"
+    ],
+    "files": [
+        "var/cache/SBReleaserContainer.php"
+    ],
+    "finder": [
+        {
+            "name": "*.php",
+            "exclude": ["Tests", "tests", "test", "Fixtures", "fixtures", "docs", "doc", "examples"],
+            "in": "vendor"
+        },
+        {
+            "in": "vendor/symfony/console/Resources"
+        }
+    ]
+}

@@ -1,0 +1,26 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use SBReleaser\Kernel;
+use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
+
+$projectDir = dirname(__DIR__);
+$cacheDir = $projectDir . '/var/cache';
+
+if (!is_dir($cacheDir)) {
+    mkdir($cacheDir, 0755, true);
+}
+
+$container = (new Kernel($projectDir))->buildContainer();
+$dumper = new PhpDumper($container);
+
+file_put_contents(
+    $cacheDir . '/SBReleaserContainer.php',
+    $dumper->dump(['class' => 'SBReleaserContainer']),
+);
+
+echo "Container compiled to var/cache/SBReleaserContainer.php\n";
