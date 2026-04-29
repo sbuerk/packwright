@@ -13,6 +13,24 @@ Install all dependencies (including dev tools):
 composer install
 ```
 
+## Coding Guidelines
+
+This project follows the
+[TYPO3 Core PER-CS coding standard](https://github.com/TYPO3/typo3/blob/main/Build/php-cs-fixer/config.php),
+enforced via [PHP-CS-Fixer](https://cs.symfony.com/).
+
+Check for violations (dry-run, no files modified):
+
+```bash
+composer cs:check
+```
+
+Fix all violations automatically:
+
+```bash
+composer cs:fix
+```
+
 ## Testing
 
 Run the complete test suite:

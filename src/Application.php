@@ -16,7 +16,8 @@ final class Application extends ConsoleApplication
      * @param iterable<Command> $commands
      */
     public function __construct(
-        #[TaggedIterator('console.command')] iterable $commands,
+        #[TaggedIterator('console.command')]
+        iterable $commands,
     ) {
         parent::__construct('sb-releaser', '0.1.0');
         foreach ($commands as $command) {

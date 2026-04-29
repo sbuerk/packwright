@@ -16,6 +16,7 @@
         "symfony/dependency-injection": "^7.4"
     },
     "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.95",
         "humbug/box": "^4.7",
         "phpunit/phpunit": "^11.5",
         "symfony/phpunit-bridge": "^7.4"
@@ -31,16 +32,20 @@
         }
     },
     "scripts": {
-        "test": "phpunit",
-        "test:unit": "phpunit --testsuite unit",
-        "test:functional": "phpunit --testsuite functional",
-        "dump-container": "php bin/dump-container",
+        "cs:check": "${PHP_BINARY} vendor/bin/php-cs-fixer fix --dry-run --diff",
+        "cs:fix": "${PHP_BINARY} vendor/bin/php-cs-fixer fix",
+        "test": "${PHP_BINARY} vendor/bin/phpunit",
+        "test:unit": "${PHP_BINARY} vendor/bin/phpunit --testsuite unit",
+        "test:functional": "${PHP_BINARY} vendor/bin/phpunit --testsuite functional",
+        "dump-container": "${PHP_BINARY} bin/dump-container",
         "build": [
             "@dump-container",
-            "vendor/bin/box compile"
+            "${PHP_BINARY} vendor/bin/box compile --composer-bin=\"${COMPOSER_BINARY}\""
         ]
     },
     "scripts-descriptions": {
+        "cs:check": "Check coding guidelines (dry-run, shows diff but does not modify files)",
+        "cs:fix": "Fix coding guideline violations automatically",
         "test": "Run the complete test suite (unit + functional)",
         "test:unit": "Run unit tests only",
         "test:functional": "Run functional (integration) tests only",
