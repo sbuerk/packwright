@@ -1,0 +1,25 @@
+name: CGL
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  cgl:
+    name: CGL
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+
+      - name: Install dependencies
+        run: composer install --no-interaction
+
+      - name: Check coding guidelines
+        run: composer cs:check

@@ -58,6 +58,9 @@
         "build": "Compile the DI container then build the self-contained PHAR binary (build/sb-releaser)"
     },
     "config": {
+        "platform": {
+            "php": "8.2.0"
+        },
         "sort-packages": true
     }
 }
