@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SBReleaser\ExtEmConf\Dto\Version;
+use SBReleaser\ExtEmConf\Enum\VersionFormat;
 
 final class VersionTest extends TestCase
 {
@@ -70,7 +71,7 @@ final class VersionTest extends TestCase
     }
 
     /**
-     * @return array<string, array{Version, string, string}>
+     * @return array<string, array{Version, VersionFormat, string}>
      */
     public static function formatProvider(): array
     {
@@ -78,27 +79,17 @@ final class VersionTest extends TestCase
         $stable = new Version(major: 1, minor: 0, patch: 0);
 
         return [
-            'xyz' => [$v, 'x.y.z', '1.2.3'],
-            'xyzd' => [$v, 'x.y.z.d', '1.2.3.4'],
-            'xyz-stability with suffix' => [$v, 'x.y.z-stability', '1.2.3-beta'],
-            'xyz-stability without suffix falls back' => [$stable, 'x.y.z-stability', '1.0.0'],
+            'XYZ' => [$v, VersionFormat::XYZ, '1.2.3'],
+            'XYZ_D' => [$v, VersionFormat::XYZ_D, '1.2.3.4'],
+            'XYZ_STABILITY with suffix' => [$v, VersionFormat::XYZ_STABILITY, '1.2.3-beta'],
+            'XYZ_STABILITY without suffix falls back' => [$stable, VersionFormat::XYZ_STABILITY, '1.0.0'],
         ];
     }
 
     #[Test]
     #[DataProvider('formatProvider')]
-    public function formatReturnsExpectedString(Version $version, string $pattern, string $expected): void
+    public function formatReturnsExpectedString(Version $version, VersionFormat $format, string $expected): void
     {
-        self::assertSame($expected, $version->format($pattern));
-    }
-
-    #[Test]
-    public function formatThrowsForUnknownPattern(): void
-    {
-        $version = new Version(major: 1, minor: 0, patch: 0);
-
-        $this->expectException(\InvalidArgumentException::class);
-
-        $version->format('unknown');
+        self::assertSame($expected, $version->format($format));
     }
 }

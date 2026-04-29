@@ -14,6 +14,7 @@ use SBReleaser\ExtEmConf\Dto\ExtEmConf;
 use SBReleaser\ExtEmConf\Dto\Version;
 use SBReleaser\ExtEmConf\Enum\Category;
 use SBReleaser\ExtEmConf\Enum\State;
+use SBReleaser\ExtEmConf\Enum\VersionFormat;
 
 /**
  * Generates `ext_emconf.php` file content from an `ExtEmConf` DTO.
@@ -156,8 +157,8 @@ final class ExtEmConfWriter
     {
         return match (true) {
             $version instanceof AllVersions => '',
-            $version instanceof SingleVersion => $version->version->format('x.y.z'),
-            default => $version->lowest->format('x.y.z') . '-' . $version->highest->format('x.y.z'),
+            $version instanceof SingleVersion => $version->version->format(VersionFormat::XYZ),
+            default => $version->lowest->format(VersionFormat::XYZ) . '-' . $version->highest->format(VersionFormat::XYZ),
         };
     }
 

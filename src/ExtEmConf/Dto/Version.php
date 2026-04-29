@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SBReleaser\ExtEmConf\Dto;
 
 use Composer\Semver\VersionParser;
+use SBReleaser\ExtEmConf\Enum\VersionFormat;
 
 /**
  * Immutable value object representing a semantic version number.
@@ -62,30 +63,26 @@ final readonly class Version implements \Stringable
     }
 
     /**
-     * Returns the version in the requested pattern.
+     * Returns the version in the requested format.
      *
-     * Supported patterns:
-     * - `x.y.z`           → `1.2.3` (default)
-     * - `x.y.z.d`         → `1.2.3.0`
-     * - `x.y.z-stability` → `1.2.3-alpha` (falls back to `x.y.z` when
-     *                        no stability suffix is set)
+     * - `XYZ`           → `1.2.3`
+     * - `XYZ_D`         → `1.2.3.0`
+     * - `XYZ_STABILITY` → `1.2.3-alpha` (falls back to `x.y.z` when
+     *                      no stability label is set)
      */
-    public function format(string $pattern = 'x.y.z'): string
+    public function format(VersionFormat $format = VersionFormat::XYZ): string
     {
-        return match ($pattern) {
-            'x.y.z' => "{$this->major}.{$this->minor}.{$this->patch}",
-            'x.y.z.d' => "{$this->major}.{$this->minor}.{$this->patch}.{$this->build}",
-            'x.y.z-stability' => $this->stability !== null
+        return match ($format) {
+            VersionFormat::XYZ => "{$this->major}.{$this->minor}.{$this->patch}",
+            VersionFormat::XYZ_D => "{$this->major}.{$this->minor}.{$this->patch}.{$this->build}",
+            VersionFormat::XYZ_STABILITY => $this->stability !== null
                 ? "{$this->major}.{$this->minor}.{$this->patch}-{$this->stability}"
                 : "{$this->major}.{$this->minor}.{$this->patch}",
-            default => throw new \InvalidArgumentException(
-                sprintf('Unknown version format pattern "%s".', $pattern),
-            ),
         };
     }
 
     public function __toString(): string
     {
-        return $this->format('x.y.z');
+        return $this->format(VersionFormat::XYZ);
     }
 }
