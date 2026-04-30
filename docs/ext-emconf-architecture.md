@@ -38,13 +38,19 @@ TYPO3 documentation references:
 SBReleaser\ExtEmConf\
   Dto\                         Data Transfer Objects (immutable, final readonly)
     ExtEmConf                  Root DTO — one instance per file
-    Version                    Semver-aware version (Stringable)
+    Version                    Semver-aware version value object (Stringable)
     Autoload                   Autoload / autoload-dev configuration
+    Autoload\
+      Psr4Entry                Single PSR-4 namespace-prefix → path entry
+      Psr4Collection           Ordered collection of Psr4Entry (Countable, IteratorAggregate)
+      ClassmapEntry            Single classmap path entry
+      ClassmapCollection       Ordered collection of ClassmapEntry (Countable, IteratorAggregate)
     Constraints\
       Constraints              Wraps the three dependency collections
       DependencyCollection     Ordered list of Dependency items
-      Dependency               Extension key + version constraint value
+      Dependency               Extension key + ConstraintVersionType + VersionValueInterface
       VersionValue\
+        VersionValueInterface  Common interface: toVersionString(): string
         AllVersions            Represents '' or '*' (any version)
         SingleVersion          Represents a single 'x.y.z' version
         VersionRange           Represents a 'lowest-highest' range
@@ -52,6 +58,8 @@ SBReleaser\ExtEmConf\
     Category                   String-backed enum for the category field
     State                      String-backed enum for the state field
     ConstraintVersionType      Pure enum: ALL | VERSION | RANGE
+    VersionFormat              Pure enum: XYZ | XYZ_D | XYZ_STABILITY
+    Typo3Version               Int-backed enum: V8 | V9 | V10 | V11 | V12 | V13
     ResultState                Pure enum: SUCCESS | WARNING | FAILURE
     IssueSeverity              Pure enum: WARNING | ERROR
   Result\
@@ -65,6 +73,8 @@ SBReleaser\ExtEmConf\
     ExtEmConfNormalizer        Strips fields invalid for a TYPO3 version → NormalizationResult
     ExtEmConfWriter            Renders an ExtEmConf DTO as PHP file content
 ```
+
+All classes, enums, and interfaces carry `@internal not part of public API`.
 
 ---
 
@@ -166,7 +176,7 @@ appears in writer output.
 All deprecated fields are present as nullable properties on `ExtEmConf` so
 that existing files round-trip correctly. The writer emits them with an
 inline `// @deprecated` comment and only when the target TYPO3 version still
-supported that field. The validator flags deprecated fields as `WARNING` for
+supports that field. The validator flags deprecated fields as `WARNING` for
 TYPO3 versions where they are deprecated.
 
 ---
@@ -175,55 +185,89 @@ TYPO3 versions where they are deprecated.
 
 ### Version
 
-`Version` is a `final readonly` class implementing `Stringable`.
-`__toString()` returns `x.y.z`. A `format(string $pattern): string` method
-supports the patterns `x.y.z`, `x.y.z.d`, and `x.y.z-stability`.
+`Version` is a `final readonly` class implementing `Stringable` and used
+exclusively for extension version numbers on `ExtEmConf` and within
+constraint value objects.
+
+`__toString()` returns the `XYZ` format. The `format(VersionFormat $format)`
+method supports three formats:
+
+| `VersionFormat` case | Output example |
+|---|---|
+| `XYZ` (default) | `1.2.3` |
+| `XYZ_D` | `1.2.3.0` |
+| `XYZ_STABILITY` | `1.2.3-alpha` (falls back to `XYZ` when no stability) |
 
 The static factory `Version::fromString(string $raw): self` uses
-`Composer\Semver\VersionParser` (v3.4.4) internally to normalize and
-validate the string. The parser is **not** exposed in the public API; it is
-an implementation detail. `composer/semver` does not provide a version
+`Composer\Semver\VersionParser` (v3.4.4) internally. The parser is **not**
+exposed in the public API. `composer/semver` does not provide a version
 value-object — we create our own.
+
+### Typo3Version
+
+`Typo3Version` is an int-backed enum representing supported TYPO3 major
+releases. It is used exclusively as the `$targetTypo3Version` parameter
+in the three services. `Version` is never used for this purpose.
+
+```php
+enum Typo3Version: int {
+    case V8 = 8;  case V9 = 9;   case V10 = 10;
+    case V11 = 11; case V12 = 12; case V13 = 13;
+}
+```
+
+The integer backing value enables simple `>=` comparisons inside the services.
+
+**Important simplification:** the `clearCacheOnLoad` field was technically
+deprecated in TYPO3 12.1. Because `Typo3Version` uses only major versions,
+`V12` is treated as the deprecation boundary — all of 12.x is considered
+the version where `clearCacheOnLoad` is deprecated.
 
 ### Constraint version values
 
-Three concrete classes represent the three possible forms of a dependency
-version string. No shared interface is needed — the union type is the
-contract:
+Three concrete classes implement `VersionValueInterface`. The interface
+provides a single dispatch method `toVersionString(): string` so callers
+never need `instanceof` branching:
 
-| Class | Represents | Example |
+| Class | Represents | `toVersionString()` |
 |---|---|---|
-| `AllVersions` | Any version (`''` or `'*'`) | `'typo3' => ''` |
-| `SingleVersion` | One exact version | `'news' => '11.3.0'` |
-| `VersionRange` | Inclusive range `lowest-highest` | `'typo3' => '12.4.0-13.4.99'` |
+| `AllVersions` | Any version (`''` or `'*'`) | `''` |
+| `SingleVersion` | One exact version | `'11.3.0'` |
+| `VersionRange` | Inclusive range `lowest-highest` | `'12.4.0-13.4.99'` |
 
-Detection in the reader: the pattern `/^\d+\.\d+\.\d+-\d+\.\d+\.\d+$/`
-identifies a range; an empty string or `'*'` maps to `AllVersions`;
-anything else is attempted as `SingleVersion` via `Version::fromString()`.
-
-`Dependency` holds both the typed version value and the corresponding
-`ConstraintVersionType` enum case so callers can switch on type without
-`instanceof` checks:
+`Dependency` holds both the typed `VersionValueInterface $version` and a
+`ConstraintVersionType $versionType` discriminant (for callers that prefer
+a pure-enum branch over a method call):
 
 ```php
-public ConstraintVersionType $versionType,
-public AllVersions|SingleVersion|VersionRange $version,
+public ConstraintVersionType $versionType,  // ALL | VERSION | RANGE
+public VersionValueInterface $version,
 ```
 
 ### Autoload
 
 ```php
 final readonly class Autoload {
-    /**
-     * @param array<string, string> $psr4   namespace prefix → path
-     * @param list<string>          $classmap  directory/file paths
-     */
     public function __construct(
-        public array $psr4 = [],
-        public array $classmap = [],
+        public Psr4Collection $psr4 = new Psr4Collection(),
+        public ClassmapCollection $classmap = new ClassmapCollection(),
     ) {}
 }
 ```
+
+`Psr4Collection` iterates as `string → Psr4Entry` (keyed by namespace).
+`ClassmapCollection` iterates as `int → ClassmapEntry`.
+
+Each entry type is a final readonly class:
+
+```php
+final readonly class Psr4Entry    { public string $namespace, $path; }
+final readonly class ClassmapEntry { public string $path; }
+```
+
+Both collections implement `Countable` and `IteratorAggregate` and provide
+`all(): list<...>` and `isEmpty(): bool` methods, following the same pattern
+as `DependencyCollection`.
 
 The `autoload-dev` top-level key maps to `ExtEmConf::$autoloadDev`
 (camelCase, no dash).
@@ -249,40 +293,39 @@ a `FAILURE` result with no DTO and a single `ERROR` issue.
 
 ### ExtEmConfValidator
 
-**Input:** `ExtEmConf $dto`, `Version|null $minimumTypo3Version = null`
+**Input:** `ExtEmConf $dto`, `?Typo3Version $targetTypo3Version = null`
 
 **Contract:** pure read — never mutates the DTO.
 
-When `$minimumTypo3Version` is supplied, any field that was already
-deprecated in that version is flagged as `WARNING`. Fields that never
-existed in that version are flagged as `ERROR`.
+When `$targetTypo3Version` is supplied, any field deprecated in that version
+is flagged as `WARNING`. Without a target version only general structural
+rules are applied.
 
 **Output:** `ValidationResult`
-- `bool $valid` — true when no ERROR issues are present
+- `bool isValid()` — true when no ERROR issues are present
 - `ResultState $state`
 - `list<Issue> $issues`
 
 ### ExtEmConfNormalizer
 
-**Input:** `ExtEmConf $dto`, `Version $targetTypo3Version`
+**Input:** `ExtEmConf $dto`, `?Typo3Version $targetTypo3Version = null`
 
 **Contract:** produces a **new** `ExtEmConf` instance. The original is
 never modified.
 
-Fields not valid for `>= targetTypo3Version` are omitted from the new
-object. Each omitted field is recorded in `$droppedItems` as an `Issue`
-with severity `WARNING` (not ERROR — omissions are expected, not failures).
-`$unknownProperties` is reset to `[]` in the normalized object.
+Fields not valid for the target version are omitted from the new object.
+Each omitted field is recorded in `$droppedItems` as an `Issue` with
+severity `WARNING`. `$unknownProperties` is always reset to `[]`.
 
 **Output:** `NormalizationResult`
-- `ExtEmConf $normalizedExtEmConf`
-- `bool $hasChanges` — diff flag, true when anything was dropped
+- `ExtEmConf $extEmConf` — new, clean instance
+- `bool $hasChanges` — true when anything was dropped
 - `ResultState $state`
 - `list<Issue> $droppedItems`
 
 ### ExtEmConfWriter
 
-**Input:** `ExtEmConf $dto`, `Version|null $targetTypo3Version = null`
+**Input:** `ExtEmConf $dto`, `?Typo3Version $targetTypo3Version = null`
 
 **Contract:** returns the PHP source code for a valid `ext_emconf.php` as a
 string (no file I/O). The caller decides where to write it.
@@ -292,6 +335,10 @@ supported in that version. Deprecated fields that are still supported are
 included with an inline `// @deprecated` comment. Fields in
 `$unknownProperties` are never written regardless of configuration.
 
+**Typo3Version deprecation thresholds in the writer:**
+- `$targetTypo3Version->value >= 9` — omit `uploadfolder`, `createDirs`
+- `$targetTypo3Version->value >= 12` — omit `clearCacheOnLoad`
+
 **Output:** `string` (PHP source)
 
 ---
@@ -299,12 +346,12 @@ included with an inline `// @deprecated` comment. Fields in
 ## Result Infrastructure
 
 ```
-ResultState   (enum)     SUCCESS | WARNING | FAILURE   — overall operation state
-IssueSeverity (enum)     WARNING | ERROR               — per-issue severity
-Issue         (DTO)      path (dot notation) + message + IssueSeverity
-ReadResult    (DTO)      ExtEmConf|null + ResultState + list<Issue>
-ValidationResult (DTO)   bool $valid + ResultState + list<Issue>
-NormalizationResult (DTO) ExtEmConf + bool $hasChanges + ResultState + list<Issue>
+ResultState   (enum)        SUCCESS | WARNING | FAILURE   — overall state
+IssueSeverity (enum)        WARNING | ERROR               — per-issue severity
+Issue         (DTO)         path (dot notation) + message + IssueSeverity
+ReadResult    (DTO)         ExtEmConf|null + ResultState + list<Issue>
+ValidationResult (DTO)      bool isValid() + ResultState + list<Issue>
+NormalizationResult (DTO)   ExtEmConf + bool $hasChanges + ResultState + list<Issue>
 ```
 
 Issue paths use dot notation mirroring the array key path in the source
@@ -324,8 +371,8 @@ reader service.
 
 ### Unit tests (`tests/Unit/ExtEmConf/`)
 
-Cover DTO construction, `Version::fromString()` parsing, `format()` output,
-constraint version detection, and enum fallback behaviour.
+Cover DTO construction, `Version::fromString()` parsing, `VersionFormat`
+output, constraint version detection, and enum fallback behaviour.
 
 ### Functional tests (`tests/Functional/ExtEmConf/`)
 
@@ -345,3 +392,12 @@ self-contained file that `ExtEmConfReader` can include. Fixtures:
 Tests cover the full pipeline: read → validate → normalize → write.
 A dedicated assertion confirms that keys from `$unknownProperties` are
 absent in writer output.
+
+### Test conventions
+
+1. **No `setUp()` / class properties for subjects.** Instantiate services
+   and DTOs directly inside each test method.
+2. **No private helper methods** (`fixtureFile()`, `validDto()`, etc.).
+   Inline all construction directly in each test method.
+3. **Named arguments follow constructor definition order.** Skipping optional
+   parameters is fine; reordering them is not.
