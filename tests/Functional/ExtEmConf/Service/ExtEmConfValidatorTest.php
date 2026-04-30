@@ -16,35 +16,18 @@ use SBReleaser\ExtEmConf\Service\ExtEmConfValidator;
 
 final class ExtEmConfValidatorTest extends TestCase
 {
-    private ExtEmConfValidator $validator;
-
-    protected function setUp(): void
-    {
-        $this->validator = new ExtEmConfValidator();
-    }
-
-    /**
-     * @param array<string, mixed> $overrides
-     */
-    private function validDto(array $overrides = []): ExtEmConf
-    {
-        return new ExtEmConf(
-            title: $overrides['title'] ?? 'My Extension',
-            description: $overrides['description'] ?? 'A great extension.',
-            version: $overrides['version'] ?? '1.0.0',
-            category: $overrides['category'] ?? Category::PLUGIN,
-            state: $overrides['state'] ?? State::STABLE,
-            author: 'John Doe',
-            authorEmail: $overrides['authorEmail'] ?? 'john@example.com',
-            unknownProperties: $overrides['unknownProperties'] ?? [],
-            clearCacheOnLoad: $overrides['clearCacheOnLoad'] ?? null,
-        );
-    }
-
     #[Test]
     public function validateCleanDtoReturnsSuccess(): void
     {
-        $result = $this->validator->validate($this->validDto());
+        $result = (new ExtEmConfValidator())->validate(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            author: 'John Doe',
+            authorEmail: 'john@example.com',
+        ));
 
         self::assertSame(ResultState::SUCCESS, $result->state);
         self::assertEmpty($result->issues);
@@ -54,7 +37,15 @@ final class ExtEmConfValidatorTest extends TestCase
     #[Test]
     public function validateEmptyTitleReturnsFailure(): void
     {
-        $result = $this->validator->validate($this->validDto(['title' => '']));
+        $result = (new ExtEmConfValidator())->validate(new ExtEmConf(
+            title: '',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            author: 'John Doe',
+            authorEmail: 'john@example.com',
+        ));
 
         self::assertSame(ResultState::FAILURE, $result->state);
         self::assertFalse($result->isValid());
@@ -67,7 +58,15 @@ final class ExtEmConfValidatorTest extends TestCase
     #[Test]
     public function validateEmptyDescriptionReturnsFailure(): void
     {
-        $result = $this->validator->validate($this->validDto(['description' => '']));
+        $result = (new ExtEmConfValidator())->validate(new ExtEmConf(
+            title: 'My Extension',
+            description: '',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            author: 'John Doe',
+            authorEmail: 'john@example.com',
+        ));
 
         self::assertSame(ResultState::FAILURE, $result->state);
         $errorPaths = array_map(static fn($i) => $i->path, $result->issues);
@@ -77,7 +76,15 @@ final class ExtEmConfValidatorTest extends TestCase
     #[Test]
     public function validateEmptyVersionReturnsFailure(): void
     {
-        $result = $this->validator->validate($this->validDto(['version' => '']));
+        $result = (new ExtEmConfValidator())->validate(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            author: 'John Doe',
+            authorEmail: 'john@example.com',
+        ));
 
         self::assertSame(ResultState::FAILURE, $result->state);
         $errorPaths = array_map(static fn($i) => $i->path, $result->issues);
@@ -87,7 +94,15 @@ final class ExtEmConfValidatorTest extends TestCase
     #[Test]
     public function validateInvalidVersionStringReturnsFailure(): void
     {
-        $result = $this->validator->validate($this->validDto(['version' => 'not-a-version']));
+        $result = (new ExtEmConfValidator())->validate(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: 'not-a-version',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            author: 'John Doe',
+            authorEmail: 'john@example.com',
+        ));
 
         self::assertSame(ResultState::FAILURE, $result->state);
         $errorPaths = array_map(static fn($i) => $i->path, $result->issues);
@@ -97,7 +112,15 @@ final class ExtEmConfValidatorTest extends TestCase
     #[Test]
     public function validateInvalidEmailReturnsWarning(): void
     {
-        $result = $this->validator->validate($this->validDto(['authorEmail' => 'not-an-email']));
+        $result = (new ExtEmConfValidator())->validate(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            author: 'John Doe',
+            authorEmail: 'not-an-email',
+        ));
 
         self::assertSame(ResultState::WARNING, $result->state);
         self::assertTrue($result->hasWarnings());
@@ -110,8 +133,15 @@ final class ExtEmConfValidatorTest extends TestCase
     #[Test]
     public function validateRawStringCategoryReturnsWarning(): void
     {
-        $dto = $this->validDto(['category' => 'some_unknown_category']);
-        $result = $this->validator->validate($dto);
+        $result = (new ExtEmConfValidator())->validate(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: 'some_unknown_category',
+            state: State::STABLE,
+            author: 'John Doe',
+            authorEmail: 'john@example.com',
+        ));
 
         self::assertSame(ResultState::WARNING, $result->state);
         $warnPaths = array_map(static fn($i) => $i->path, $result->issues);
@@ -121,8 +151,15 @@ final class ExtEmConfValidatorTest extends TestCase
     #[Test]
     public function validateRawStringStateReturnsWarning(): void
     {
-        $dto = $this->validDto(['state' => 'totally_made_up']);
-        $result = $this->validator->validate($dto);
+        $result = (new ExtEmConfValidator())->validate(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: 'totally_made_up',
+            author: 'John Doe',
+            authorEmail: 'john@example.com',
+        ));
 
         self::assertSame(ResultState::WARNING, $result->state);
         $warnPaths = array_map(static fn($i) => $i->path, $result->issues);
@@ -132,8 +169,16 @@ final class ExtEmConfValidatorTest extends TestCase
     #[Test]
     public function validateUnknownPropertiesReturnsWarning(): void
     {
-        $dto = $this->validDto(['unknownProperties' => ['my_custom_key' => 'value']]);
-        $result = $this->validator->validate($dto);
+        $result = (new ExtEmConfValidator())->validate(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            author: 'John Doe',
+            authorEmail: 'john@example.com',
+            unknownProperties: ['my_custom_key' => 'value'],
+        ));
 
         self::assertSame(ResultState::WARNING, $result->state);
         $warnPaths = array_map(static fn($i) => $i->path, $result->issues);
@@ -143,8 +188,19 @@ final class ExtEmConfValidatorTest extends TestCase
     #[Test]
     public function validateDeprecatedClearCacheOnLoadWithTargetV13ReturnsWarning(): void
     {
-        $dto = $this->validDto(['clearCacheOnLoad' => false]);
-        $result = $this->validator->validate($dto, Typo3Version::V13);
+        $result = (new ExtEmConfValidator())->validate(
+            new ExtEmConf(
+                title: 'My Extension',
+                description: 'A great extension.',
+                version: '1.0.0',
+                category: Category::PLUGIN,
+                state: State::STABLE,
+                author: 'John Doe',
+                authorEmail: 'john@example.com',
+                clearCacheOnLoad: false,
+            ),
+            Typo3Version::V13,
+        );
 
         self::assertSame(ResultState::WARNING, $result->state);
         $warnPaths = array_map(static fn($i) => $i->path, $result->issues);
@@ -154,8 +210,16 @@ final class ExtEmConfValidatorTest extends TestCase
     #[Test]
     public function validateDeprecatedClearCacheOnLoadWithoutTargetReturnsSuccess(): void
     {
-        $dto = $this->validDto(['clearCacheOnLoad' => false]);
-        $result = $this->validator->validate($dto);
+        $result = (new ExtEmConfValidator())->validate(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            author: 'John Doe',
+            authorEmail: 'john@example.com',
+            clearCacheOnLoad: false,
+        ));
 
         self::assertSame(ResultState::SUCCESS, $result->state);
         self::assertEmpty($result->issues);
@@ -164,13 +228,12 @@ final class ExtEmConfValidatorTest extends TestCase
     #[Test]
     public function validateIssuesHaveCorrectSeverity(): void
     {
-        $dto = new ExtEmConf(
+        $result = (new ExtEmConfValidator())->validate(new ExtEmConf(
             title: '',
             description: 'OK',
             version: '1.0.0',
             authorEmail: 'not-an-email',
-        );
-        $result = $this->validator->validate($dto);
+        ));
 
         $errors = array_filter($result->issues, static fn($i) => $i->severity === IssueSeverity::ERROR);
         $warnings = array_filter($result->issues, static fn($i) => $i->severity === IssueSeverity::WARNING);

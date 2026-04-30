@@ -14,35 +14,16 @@ use SBReleaser\ExtEmConf\Service\ExtEmConfNormalizer;
 
 final class ExtEmConfNormalizerTest extends TestCase
 {
-    private ExtEmConfNormalizer $normalizer;
-
-    protected function setUp(): void
-    {
-        $this->normalizer = new ExtEmConfNormalizer();
-    }
-
-    /**
-     * @param array<string, mixed> $overrides
-     */
-    private function baseDto(array $overrides = []): ExtEmConf
-    {
-        return new ExtEmConf(
-            title: 'My Extension',
-            description: 'A great extension.',
-            version: '1.0.0',
-            category: $overrides['category'] ?? Category::PLUGIN,
-            state: $overrides['state'] ?? State::STABLE,
-            clearCacheOnLoad: $overrides['clearCacheOnLoad'] ?? null,
-            uploadfolder: $overrides['uploadfolder'] ?? null,
-            createDirs: $overrides['createDirs'] ?? null,
-            unknownProperties: $overrides['unknownProperties'] ?? [],
-        );
-    }
-
     #[Test]
     public function normalizeCleanDtoHasNoChanges(): void
     {
-        $result = $this->normalizer->normalize($this->baseDto());
+        $result = (new ExtEmConfNormalizer())->normalize(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+        ));
 
         self::assertFalse($result->hasChanges);
         self::assertEmpty($result->droppedItems);
@@ -51,7 +32,13 @@ final class ExtEmConfNormalizerTest extends TestCase
     #[Test]
     public function normalizeDropsRawStringCategory(): void
     {
-        $result = $this->normalizer->normalize($this->baseDto(['category' => 'totally_unknown']));
+        $result = (new ExtEmConfNormalizer())->normalize(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: 'totally_unknown',
+            state: State::STABLE,
+        ));
 
         self::assertTrue($result->hasChanges);
         self::assertNull($result->extEmConf->category);
@@ -63,7 +50,13 @@ final class ExtEmConfNormalizerTest extends TestCase
     #[Test]
     public function normalizeKeepsValidCategoryEnum(): void
     {
-        $result = $this->normalizer->normalize($this->baseDto(['category' => Category::FE]));
+        $result = (new ExtEmConfNormalizer())->normalize(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::FE,
+            state: State::STABLE,
+        ));
 
         self::assertFalse($result->hasChanges);
         self::assertSame(Category::FE, $result->extEmConf->category);
@@ -72,7 +65,13 @@ final class ExtEmConfNormalizerTest extends TestCase
     #[Test]
     public function normalizeDropsRawStringState(): void
     {
-        $result = $this->normalizer->normalize($this->baseDto(['state' => 'totally_unknown']));
+        $result = (new ExtEmConfNormalizer())->normalize(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: 'totally_unknown',
+        ));
 
         self::assertTrue($result->hasChanges);
         self::assertNull($result->extEmConf->state);
@@ -84,8 +83,14 @@ final class ExtEmConfNormalizerTest extends TestCase
     #[Test]
     public function normalizeDropsUnknownProperties(): void
     {
-        $dto = $this->baseDto(['unknownProperties' => ['my_key' => 'value', 'another' => 42]]);
-        $result = $this->normalizer->normalize($dto);
+        $result = (new ExtEmConfNormalizer())->normalize(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            unknownProperties: ['my_key' => 'value', 'another' => 42],
+        ));
 
         self::assertTrue($result->hasChanges);
         self::assertSame([], $result->extEmConf->unknownProperties);
@@ -98,8 +103,17 @@ final class ExtEmConfNormalizerTest extends TestCase
     #[Test]
     public function normalizeDropsUploadfolderForTargetV9(): void
     {
-        $dto = $this->baseDto(['uploadfolder' => false]);
-        $result = $this->normalizer->normalize($dto, Typo3Version::V9);
+        $result = (new ExtEmConfNormalizer())->normalize(
+            new ExtEmConf(
+                title: 'My Extension',
+                description: 'A great extension.',
+                version: '1.0.0',
+                category: Category::PLUGIN,
+                state: State::STABLE,
+                uploadfolder: false,
+            ),
+            Typo3Version::V9,
+        );
 
         self::assertTrue($result->hasChanges);
         self::assertNull($result->extEmConf->uploadfolder);
@@ -111,8 +125,17 @@ final class ExtEmConfNormalizerTest extends TestCase
     #[Test]
     public function normalizeKeepsUploadfolderForTargetV8(): void
     {
-        $dto = $this->baseDto(['uploadfolder' => false]);
-        $result = $this->normalizer->normalize($dto, Typo3Version::V8);
+        $result = (new ExtEmConfNormalizer())->normalize(
+            new ExtEmConf(
+                title: 'My Extension',
+                description: 'A great extension.',
+                version: '1.0.0',
+                category: Category::PLUGIN,
+                state: State::STABLE,
+                uploadfolder: false,
+            ),
+            Typo3Version::V8,
+        );
 
         self::assertFalse($result->hasChanges);
         self::assertFalse($result->extEmConf->uploadfolder);
@@ -121,8 +144,17 @@ final class ExtEmConfNormalizerTest extends TestCase
     #[Test]
     public function normalizeDropsCreateDirsForTargetV9(): void
     {
-        $dto = $this->baseDto(['createDirs' => 'uploads/my_ext']);
-        $result = $this->normalizer->normalize($dto, Typo3Version::V9);
+        $result = (new ExtEmConfNormalizer())->normalize(
+            new ExtEmConf(
+                title: 'My Extension',
+                description: 'A great extension.',
+                version: '1.0.0',
+                category: Category::PLUGIN,
+                state: State::STABLE,
+                createDirs: 'uploads/my_ext',
+            ),
+            Typo3Version::V9,
+        );
 
         self::assertTrue($result->hasChanges);
         self::assertNull($result->extEmConf->createDirs);
@@ -131,8 +163,17 @@ final class ExtEmConfNormalizerTest extends TestCase
     #[Test]
     public function normalizeDropsClearCacheOnLoadForTargetV12(): void
     {
-        $dto = $this->baseDto(['clearCacheOnLoad' => false]);
-        $result = $this->normalizer->normalize($dto, Typo3Version::V12);
+        $result = (new ExtEmConfNormalizer())->normalize(
+            new ExtEmConf(
+                title: 'My Extension',
+                description: 'A great extension.',
+                version: '1.0.0',
+                category: Category::PLUGIN,
+                state: State::STABLE,
+                clearCacheOnLoad: false,
+            ),
+            Typo3Version::V12,
+        );
 
         self::assertTrue($result->hasChanges);
         self::assertNull($result->extEmConf->clearCacheOnLoad);
@@ -144,8 +185,17 @@ final class ExtEmConfNormalizerTest extends TestCase
     #[Test]
     public function normalizeKeepsClearCacheOnLoadForTargetV11(): void
     {
-        $dto = $this->baseDto(['clearCacheOnLoad' => false]);
-        $result = $this->normalizer->normalize($dto, Typo3Version::V11);
+        $result = (new ExtEmConfNormalizer())->normalize(
+            new ExtEmConf(
+                title: 'My Extension',
+                description: 'A great extension.',
+                version: '1.0.0',
+                category: Category::PLUGIN,
+                state: State::STABLE,
+                clearCacheOnLoad: false,
+            ),
+            Typo3Version::V11,
+        );
 
         self::assertFalse($result->hasChanges);
         self::assertFalse($result->extEmConf->clearCacheOnLoad);
@@ -154,8 +204,17 @@ final class ExtEmConfNormalizerTest extends TestCase
     #[Test]
     public function normalizeDropsClearCacheOnLoadForTargetV13(): void
     {
-        $dto = $this->baseDto(['clearCacheOnLoad' => true]);
-        $result = $this->normalizer->normalize($dto, Typo3Version::V13);
+        $result = (new ExtEmConfNormalizer())->normalize(
+            new ExtEmConf(
+                title: 'My Extension',
+                description: 'A great extension.',
+                version: '1.0.0',
+                category: Category::PLUGIN,
+                state: State::STABLE,
+                clearCacheOnLoad: true,
+            ),
+            Typo3Version::V13,
+        );
 
         self::assertTrue($result->hasChanges);
         self::assertNull($result->extEmConf->clearCacheOnLoad);
@@ -164,12 +223,16 @@ final class ExtEmConfNormalizerTest extends TestCase
     #[Test]
     public function normalizeWithoutTargetVersionPreservesDeprecatedFields(): void
     {
-        $dto = $this->baseDto([
-            'clearCacheOnLoad' => false,
-            'uploadfolder' => false,
-            'createDirs' => 'uploads/',
-        ]);
-        $result = $this->normalizer->normalize($dto);
+        $result = (new ExtEmConfNormalizer())->normalize(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            clearCacheOnLoad: false,
+            uploadfolder: false,
+            createDirs: 'uploads/',
+        ));
 
         self::assertFalse($result->hasChanges);
         self::assertFalse($result->extEmConf->clearCacheOnLoad);
@@ -180,8 +243,14 @@ final class ExtEmConfNormalizerTest extends TestCase
     #[Test]
     public function normalizeAlwaysReturnsNewDtoInstance(): void
     {
-        $dto = $this->baseDto();
-        $result = $this->normalizer->normalize($dto);
+        $dto = new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+        );
+        $result = (new ExtEmConfNormalizer())->normalize($dto);
 
         self::assertNotSame($dto, $result->extEmConf);
     }

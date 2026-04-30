@@ -15,22 +15,10 @@ use SBReleaser\ExtEmConf\Service\ExtEmConfReader;
 
 final class ExtEmConfReaderTest extends TestCase
 {
-    private ExtEmConfReader $reader;
-
-    protected function setUp(): void
-    {
-        $this->reader = new ExtEmConfReader();
-    }
-
-    private function fixtureFile(string $fixture): string
-    {
-        return __DIR__ . '/../Fixtures/' . $fixture . '/ext_emconf.php';
-    }
-
     #[Test]
     public function readNonExistentFileReturnsFailure(): void
     {
-        $result = $this->reader->read('/no/such/file/ext_emconf.php');
+        $result = (new ExtEmConfReader())->read('/no/such/file/ext_emconf.php');
 
         self::assertSame(ResultState::FAILURE, $result->state);
         self::assertNull($result->extEmConf);
@@ -40,7 +28,7 @@ final class ExtEmConfReaderTest extends TestCase
     #[Test]
     public function readMinimalFileReturnsSuccess(): void
     {
-        $result = $this->reader->read($this->fixtureFile('minimal'));
+        $result = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/minimal/ext_emconf.php');
 
         self::assertSame(ResultState::SUCCESS, $result->state);
         self::assertNotNull($result->extEmConf);
@@ -51,7 +39,7 @@ final class ExtEmConfReaderTest extends TestCase
     #[Test]
     public function readV13FullFileMapsAllStandardFields(): void
     {
-        $result = $this->reader->read($this->fixtureFile('v13_full'));
+        $result = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/v13_full/ext_emconf.php');
 
         self::assertSame(ResultState::SUCCESS, $result->state);
         self::assertNotNull($result->extEmConf);
@@ -69,7 +57,7 @@ final class ExtEmConfReaderTest extends TestCase
     #[Test]
     public function readV13FullFileParsesConstraints(): void
     {
-        $result = $this->reader->read($this->fixtureFile('v13_full'));
+        $result = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/v13_full/ext_emconf.php');
 
         self::assertNotNull($result->extEmConf);
         $depends = $result->extEmConf->constraints->depends;
@@ -93,7 +81,7 @@ final class ExtEmConfReaderTest extends TestCase
     #[Test]
     public function readFileWithUnknownKeysReturnsWarning(): void
     {
-        $result = $this->reader->read($this->fixtureFile('invalid_keys'));
+        $result = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/invalid_keys/ext_emconf.php');
 
         self::assertSame(ResultState::WARNING, $result->state);
         self::assertNotNull($result->extEmConf);
@@ -104,7 +92,7 @@ final class ExtEmConfReaderTest extends TestCase
     #[Test]
     public function readFileWithUnknownKeysEmitsIssuePerKey(): void
     {
-        $result = $this->reader->read($this->fixtureFile('invalid_keys'));
+        $result = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/invalid_keys/ext_emconf.php');
 
         $issuePaths = array_map(static fn($i) => $i->path, $result->issues);
         self::assertContains('unknown_custom_key', $issuePaths);
@@ -114,7 +102,7 @@ final class ExtEmConfReaderTest extends TestCase
     #[Test]
     public function readFileWithUnrecognisedStateValuePreservesRawString(): void
     {
-        $result = $this->reader->read($this->fixtureFile('invalid_keys'));
+        $result = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/invalid_keys/ext_emconf.php');
 
         self::assertNotNull($result->extEmConf);
         self::assertSame('totally_made_up_state', $result->extEmConf->state);
@@ -123,7 +111,7 @@ final class ExtEmConfReaderTest extends TestCase
     #[Test]
     public function readDeprecatedKeysFixturePreservesAllDeprecatedFields(): void
     {
-        $result = $this->reader->read($this->fixtureFile('deprecated_keys'));
+        $result = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/deprecated_keys/ext_emconf.php');
 
         self::assertNotNull($result->extEmConf);
         $dto = $result->extEmConf;
@@ -135,7 +123,7 @@ final class ExtEmConfReaderTest extends TestCase
     #[Test]
     public function readV8FullFileParsesDeprecatedFields(): void
     {
-        $result = $this->reader->read($this->fixtureFile('v8_full'));
+        $result = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/v8_full/ext_emconf.php');
 
         self::assertNotNull($result->extEmConf);
         $dto = $result->extEmConf;
@@ -147,7 +135,7 @@ final class ExtEmConfReaderTest extends TestCase
     #[Test]
     public function readV9FullFileParsesAutoloadDev(): void
     {
-        $result = $this->reader->read($this->fixtureFile('v9_full'));
+        $result = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/v9_full/ext_emconf.php');
 
         self::assertNotNull($result->extEmConf);
         self::assertCount(1, $result->extEmConf->autoloadDev->psr4);
