@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SBReleaser\ExtEmConf\Dto;
 
+use SBReleaser\ExtEmConf\Dto\Autoload\ClassmapCollection;
+use SBReleaser\ExtEmConf\Dto\Autoload\Psr4Collection;
+
 /**
  * Holds autoloading configuration from the `autoload` or `autoload-dev`
  * field of `ext_emconf.php`.
@@ -17,12 +20,8 @@ namespace SBReleaser\ExtEmConf\Dto;
  */
 final readonly class Autoload
 {
-    /**
-     * @param array<string, string> $psr4     PSR-4 namespace prefix to path mapping
-     * @param list<string>          $classmap  List of directory or file paths for classmap loading
-     */
     public function __construct(
-        public array $psr4 = [],
-        public array $classmap = [],
+        public Psr4Collection $psr4 = new Psr4Collection(),
+        public ClassmapCollection $classmap = new ClassmapCollection(),
     ) {}
 }

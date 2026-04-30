@@ -62,7 +62,7 @@ final class ExtEmConfReaderTest extends TestCase
         self::assertSame(Category::PLUGIN, $dto->category);
         self::assertSame(State::STABLE, $dto->state);
         self::assertSame('john@example.com', $dto->authorEmail);
-        self::assertSame('MyVendor\\MyExtV13\\', array_key_first($dto->autoload->psr4));
+        self::assertSame('MyVendor\\MyExtV13\\', $dto->autoload->psr4->all()[0]->namespace);
         self::assertCount(1, $dto->autoloadDev->psr4);
     }
 
@@ -151,6 +151,6 @@ final class ExtEmConfReaderTest extends TestCase
 
         self::assertNotNull($result->extEmConf);
         self::assertCount(1, $result->extEmConf->autoloadDev->psr4);
-        self::assertArrayHasKey('MyVendor\\MyExtV9\\Tests\\', $result->extEmConf->autoloadDev->psr4);
+        self::assertSame('MyVendor\\MyExtV9\\Tests\\', $result->extEmConf->autoloadDev->psr4->all()[0]->namespace);
     }
 }

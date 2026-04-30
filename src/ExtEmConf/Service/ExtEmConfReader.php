@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace SBReleaser\ExtEmConf\Service;
 
 use SBReleaser\ExtEmConf\Dto\Autoload;
+use SBReleaser\ExtEmConf\Dto\Autoload\ClassmapCollection;
+use SBReleaser\ExtEmConf\Dto\Autoload\ClassmapEntry;
+use SBReleaser\ExtEmConf\Dto\Autoload\Psr4Collection;
+use SBReleaser\ExtEmConf\Dto\Autoload\Psr4Entry;
 use SBReleaser\ExtEmConf\Dto\Constraints\Constraints;
 use SBReleaser\ExtEmConf\Dto\Constraints\Dependency;
 use SBReleaser\ExtEmConf\Dto\Constraints\DependencyCollection;
@@ -368,26 +372,29 @@ final class ExtEmConfReader
             return new Autoload();
         }
 
-        $psr4 = [];
+        $psr4Entries = [];
         $psr4Raw = $autoloadRaw['psr-4'] ?? [];
         if (is_array($psr4Raw)) {
             foreach ($psr4Raw as $namespace => $path) {
                 if (is_string($namespace) && is_string($path)) {
-                    $psr4[$namespace] = $path;
+                    $psr4Entries[] = new Psr4Entry(namespace: $namespace, path: $path);
                 }
             }
         }
 
-        $classmap = [];
+        $classmapEntries = [];
         $classmapRaw = $autoloadRaw['classmap'] ?? [];
         if (is_array($classmapRaw)) {
             foreach ($classmapRaw as $entry) {
                 if (is_string($entry)) {
-                    $classmap[] = $entry;
+                    $classmapEntries[] = new ClassmapEntry(path: $entry);
                 }
             }
         }
 
-        return new Autoload(psr4: $psr4, classmap: $classmap);
+        return new Autoload(
+            psr4: new Psr4Collection($psr4Entries),
+            classmap: new ClassmapCollection($classmapEntries),
+        );
     }
 }

@@ -162,12 +162,22 @@ final class ExtEmConfWriter
     {
         $result = [];
 
-        if ($autoload->psr4 !== []) {
-            $result['psr-4'] = $autoload->psr4;
+        if (!$autoload->psr4->isEmpty()) {
+            $psr4 = [];
+            foreach ($autoload->psr4 as $entry) {
+                $psr4[$entry->namespace] = $entry->path;
+            }
+
+            $result['psr-4'] = $psr4;
         }
 
-        if ($autoload->classmap !== []) {
-            $result['classmap'] = $autoload->classmap;
+        if (!$autoload->classmap->isEmpty()) {
+            $classmap = [];
+            foreach ($autoload->classmap as $entry) {
+                $classmap[] = $entry->path;
+            }
+
+            $result['classmap'] = $classmap;
         }
 
         return $result;

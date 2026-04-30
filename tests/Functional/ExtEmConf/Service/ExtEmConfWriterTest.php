@@ -7,6 +7,8 @@ namespace SBReleaser\Tests\Functional\ExtEmConf\Service;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SBReleaser\ExtEmConf\Dto\Autoload;
+use SBReleaser\ExtEmConf\Dto\Autoload\Psr4Collection;
+use SBReleaser\ExtEmConf\Dto\Autoload\Psr4Entry;
 use SBReleaser\ExtEmConf\Dto\Constraints\Constraints;
 use SBReleaser\ExtEmConf\Dto\Constraints\Dependency;
 use SBReleaser\ExtEmConf\Dto\Constraints\DependencyCollection;
@@ -200,7 +202,9 @@ final class ExtEmConfWriterTest extends TestCase
             title: 'Test',
             description: 'Test.',
             version: '1.0.0',
-            autoload: new Autoload(psr4: ['MyVendor\\MyExt\\' => 'Classes/']),
+            autoload: new Autoload(
+                psr4: new Psr4Collection([new Psr4Entry(namespace: 'MyVendor\\MyExt\\', path: 'Classes/')]),
+            ),
         );
 
         $output = $this->writer->generate($dto);
