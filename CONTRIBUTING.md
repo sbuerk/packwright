@@ -31,6 +31,15 @@ Fix all violations automatically:
 composer cs:fix
 ```
 
+### Enum naming
+
+PHP enum names follow PascalCase; cases follow SCREAMING_SNAKE_CASE:
+
+```php
+enum Typo3Version: int { case V8 = 8; case V13 = 13; }
+enum VersionFormat     { case XYZ; case XYZ_D; case XYZ_STABILITY; }
+```
+
 ## Static Analysis
 
 This project uses [PHPStan](https://phpstan.org/) at level 8 for static
@@ -96,3 +105,37 @@ The binary can be executed directly:
 ```bash
 php build/sb-releaser <command>
 ```
+
+## Commit Messages
+
+This project follows
+[TYPO3 Core commit message conventions](https://docs.typo3.org/m/typo3/guide-contributionworkflow/main/en-us/Appendix/CommitMessage.html).
+
+### Subject line
+
+Format: `[KEYWORD] Brief summary`
+
+Breaking changes: `[!!!][KEYWORD] Brief summary`
+
+Keywords:
+
+- `[TASK]` — chores, refactoring, improvements
+- `[BUGFIX]` — bug fixes
+- `[FEATURE]` — new features
+- `[DOCS]` — documentation only
+- `[SECURITY]` — security fixes
+
+Rules:
+
+- Imperative mood: "Add foo" not "Added foo"
+- Max 72 characters; aim for under 52
+- Capital letter after closing bracket
+- Enquote class names, file names, paths, method names, and similar
+  technical terms in single backticks
+  (e.g. `` `Application` ``, `` `bin/sb-releaser` ``, `` `->load()` ``)
+
+### Body (optional)
+
+- Explain what changed and why, not how
+- Wrap lines at 72 characters
+- Bullet points: `* Item` (asterisk + single space)

@@ -1,5 +1,5 @@
 {
-    "name": "sbuerk/versflow",
+    "name": "sbuerk/sb-releaser",
     "description": "sb-releaser — a PHP CLI tool",
     "type": "project",
     "license": "MIT",
