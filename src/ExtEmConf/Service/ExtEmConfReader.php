@@ -60,8 +60,10 @@ final class ExtEmConfReader
      * plural counterparts. Entries written under the typo'd keys are
      * captured separately so that the validator can warn and the
      * normalizer can migrate them.
+     *
+     * @var array<string, string>
      */
-    private const CONSTRAINTS_MIGRATION_MAP = [
+    public const CONSTRAINTS_MIGRATION_MAP = [
         'depend' => 'depends',
         'suggest' => 'suggests',
         'conflict' => 'conflicts',

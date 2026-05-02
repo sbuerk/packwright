@@ -4,8 +4,15 @@ declare(strict_types=1);
 
 namespace Packwright\Tests\Functional\ExtEmConf\Service;
 
+use Packwright\ExtEmConf\Dto\Constraints\Constraints;
+use Packwright\ExtEmConf\Dto\Constraints\Dependency;
+use Packwright\ExtEmConf\Dto\Constraints\DependencyCollection;
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
 use Packwright\ExtEmConf\Dto\ExtEmConf;
+use Packwright\ExtEmConf\Dto\Version;
 use Packwright\ExtEmConf\Enum\Category;
+use Packwright\ExtEmConf\Enum\ConstraintVersionType;
 use Packwright\ExtEmConf\Enum\IssueSeverity;
 use Packwright\ExtEmConf\Enum\ResultState;
 use Packwright\ExtEmConf\Enum\State;
@@ -284,6 +291,146 @@ final class ExtEmConfValidatorTest extends TestCase
 
         self::assertSame(ResultState::SUCCESS, $result->state);
         self::assertEmpty($result->issues);
+    }
+
+    #[Test]
+    public function validateMigratableConstraintsKeysSurfaceWarningHintingAtNormalization(): void
+    {
+        $result = (new ExtEmConfValidator())->validate(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            author: 'John Doe',
+            authorEmail: 'john@example.com',
+            constraints: new Constraints(
+                migratable: [
+                    'depend' => new DependencyCollection([
+                        new Dependency(
+                            extensionKey: 'php',
+                            versionType: ConstraintVersionType::VERSION,
+                            version: new SingleVersion(Version::fromString('8.2.0')),
+                        ),
+                    ]),
+                ],
+            ),
+        ));
+
+        self::assertSame(ResultState::WARNING, $result->state);
+
+        $migrationIssues = array_values(array_filter(
+            $result->issues,
+            static fn($i) => $i->path === 'constraints.depend',
+        ));
+        self::assertCount(1, $migrationIssues);
+        self::assertSame(IssueSeverity::WARNING, $migrationIssues[0]->severity);
+        self::assertStringContainsString('depend', $migrationIssues[0]->message);
+        self::assertStringContainsString('depends', $migrationIssues[0]->message);
+        self::assertStringContainsString('extemconf:normalize', $migrationIssues[0]->message);
+    }
+
+    #[Test]
+    public function validateAllThreeMigratableConstraintsGroupsAreReported(): void
+    {
+        $result = (new ExtEmConfValidator())->validate(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            author: 'John Doe',
+            authorEmail: 'john@example.com',
+            constraints: new Constraints(
+                migratable: [
+                    'depend' => new DependencyCollection([
+                        new Dependency('php', ConstraintVersionType::ALL, new AllVersions()),
+                    ]),
+                    'suggest' => new DependencyCollection([
+                        new Dependency('news', ConstraintVersionType::ALL, new AllVersions()),
+                    ]),
+                    'conflict' => new DependencyCollection([
+                        new Dependency('old_ext', ConstraintVersionType::ALL, new AllVersions()),
+                    ]),
+                ],
+            ),
+        ));
+
+        $paths = array_map(static fn($i) => $i->path, $result->issues);
+        self::assertContains('constraints.depend', $paths);
+        self::assertContains('constraints.suggest', $paths);
+        self::assertContains('constraints.conflict', $paths);
+    }
+
+    #[Test]
+    public function validateCollisionBetweenTypoAndCanonicalKeyEmitsSkipWarning(): void
+    {
+        $result = (new ExtEmConfValidator())->validate(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            author: 'John Doe',
+            authorEmail: 'john@example.com',
+            constraints: new Constraints(
+                depends: new DependencyCollection([
+                    new Dependency(
+                        extensionKey: 'typo3',
+                        versionType: ConstraintVersionType::ALL,
+                        version: new AllVersions(),
+                    ),
+                ]),
+                migratable: [
+                    'depend' => new DependencyCollection([
+                        new Dependency(
+                            extensionKey: 'typo3',
+                            versionType: ConstraintVersionType::ALL,
+                            version: new AllVersions(),
+                        ),
+                    ]),
+                ],
+            ),
+        ));
+
+        $collisionIssues = array_values(array_filter(
+            $result->issues,
+            static fn($i) => $i->path === 'constraints.depend.typo3',
+        ));
+        self::assertCount(1, $collisionIssues);
+        self::assertSame(IssueSeverity::WARNING, $collisionIssues[0]->severity);
+        self::assertStringContainsString('skipped', $collisionIssues[0]->message);
+        self::assertStringContainsString('depends.typo3', $collisionIssues[0]->message);
+    }
+
+    #[Test]
+    public function validateNoCollisionDoesNotEmitPerEntryWarning(): void
+    {
+        $result = (new ExtEmConfValidator())->validate(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            author: 'John Doe',
+            authorEmail: 'john@example.com',
+            constraints: new Constraints(
+                depends: new DependencyCollection([
+                    new Dependency('typo3', ConstraintVersionType::ALL, new AllVersions()),
+                ]),
+                migratable: [
+                    'depend' => new DependencyCollection([
+                        new Dependency('php', ConstraintVersionType::ALL, new AllVersions()),
+                    ]),
+                ],
+            ),
+        ));
+
+        $perEntry = array_filter(
+            $result->issues,
+            static fn($i) => str_starts_with($i->path, 'constraints.depend.'),
+        );
+        self::assertEmpty($perEntry);
     }
 
     #[Test]

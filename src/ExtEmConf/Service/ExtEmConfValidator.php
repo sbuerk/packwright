@@ -34,6 +34,7 @@ final class ExtEmConfValidator
         $this->validateCategory($extEmConf, $issues);
         $this->validateState($extEmConf, $issues);
         $this->validateUnknownProperties($extEmConf, $issues);
+        $this->validateMigratableConstraintsKeys($extEmConf, $issues);
 
         if ($targetTypo3Version !== null) {
             $this->validateDeprecatedFields($extEmConf, $targetTypo3Version, $issues);
@@ -187,6 +188,58 @@ final class ExtEmConfValidator
                 message: sprintf('Unknown property "%s" has no effect and will be ignored.', $key),
                 severity: IssueSeverity::WARNING,
             );
+        }
+    }
+
+    /**
+     * @param list<Issue> $issues
+     */
+    private function validateMigratableConstraintsKeys(ExtEmConf $extEmConf, array &$issues): void
+    {
+        if ($extEmConf->constraints->migratable === []) {
+            return;
+        }
+
+        foreach ($extEmConf->constraints->migratable as $typoKey => $collection) {
+            $canonicalKey = ExtEmConfReader::CONSTRAINTS_MIGRATION_MAP[$typoKey] ?? null;
+            if ($canonicalKey === null) {
+                continue;
+            }
+
+            $issues[] = new Issue(
+                path: 'constraints.' . $typoKey,
+                message: sprintf(
+                    'Unknown constraints key "%s"; `extemconf:normalize` will migrate it to "%s".',
+                    $typoKey,
+                    $canonicalKey,
+                ),
+                severity: IssueSeverity::WARNING,
+            );
+
+            $canonicalCollection = match ($canonicalKey) {
+                'depends' => $extEmConf->constraints->depends,
+                'conflicts' => $extEmConf->constraints->conflicts,
+                'suggests' => $extEmConf->constraints->suggests,
+            };
+
+            $canonicalKeys = [];
+            foreach ($canonicalCollection->all() as $existing) {
+                $canonicalKeys[$existing->extensionKey] = true;
+            }
+
+            foreach ($collection->all() as $candidate) {
+                if (isset($canonicalKeys[$candidate->extensionKey])) {
+                    $issues[] = new Issue(
+                        path: 'constraints.' . $typoKey . '.' . $candidate->extensionKey,
+                        message: sprintf(
+                            'Will be skipped during normalization: canonical "%s.%s" already exists.',
+                            $canonicalKey,
+                            $candidate->extensionKey,
+                        ),
+                        severity: IssueSeverity::WARNING,
+                    );
+                }
+            }
         }
     }
 
