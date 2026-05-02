@@ -433,7 +433,8 @@ the writer is invoked, and the same write gate as `extemconf:set` applies.
 
 ```
 packwright extemconf:constraints:set <type> <extension-key> <paths...> \
-    [--constraint=<spec>] [-t <version>] [--strict] [--dry-run] [--json]
+    [--constraint=<spec>] [-t <version>] [--strict] [--dry-run] \
+    [--update-only] [--json]
 ```
 
 ### Arguments
@@ -457,6 +458,10 @@ packwright extemconf:constraints:set <type> <extension-key> <paths...> \
 - `--strict` — require post-mutation state `SUCCESS`. Without
   `--strict`, `WARNING` is also acceptable; only `FAILURE` blocks the write.
 - `--dry-run` — preview only.
+- `--update-only` — only mutate files where `<extension-key>` is
+  already present under `<type>`. Files where the key is absent are
+  reported as `unchanged` / `SUCCESS` without writing; the cross-key
+  collision check is skipped (see "Update-only mode" below).
 - `--json` — emit a JSON document.
 
 ### Cross-key collision check
@@ -473,6 +478,28 @@ If the key already exists under `<type>`, its version is replaced
 (no duplicate entry is produced). If the key is new, it is appended.
 A no-op write (existing entry already matches the new value) reports
 `unchanged` and leaves the file untouched.
+
+### Update-only mode
+
+With `--update-only`, the command only writes files where
+`<extension-key>` is already present under `<type>`. For every other
+file the precondition gate fires immediately after the read step and
+the file is reported as `unchanged` / `SUCCESS` — no validation, no
+write, no `FAILURE`. This makes batch invocations across many
+extensions safe: keys that are absent are silently skipped instead
+of being inserted.
+
+The cross-key collision check is bypassed in this mode: a key that
+exists only under another sub-key (for example, present under
+`suggests` while you target `depends`) is treated as absent in the
+target type and reported as `unchanged`, not `FAILURE`.
+
+`--update-only` composes with the other write-gate options:
+
+* `--update-only --dry-run` for an absent key → `unchanged` (the
+  precondition gate is independent of dry-run).
+* `--update-only --strict` for an absent key → `--strict` has no
+  effect, since validation is bypassed entirely.
 
 ### Exit codes
 
@@ -495,6 +522,7 @@ A no-op write (existing entry already matches the new value) reports
   "typo3Version": 13,
   "strict": false,
   "dryRun": false,
+  "updateOnly": false,
   "files": [
     {
       "path": "/abs/path/ext_emconf.php",
