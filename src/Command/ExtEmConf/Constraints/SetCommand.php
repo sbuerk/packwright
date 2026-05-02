@@ -35,7 +35,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     name: 'extemconf:constraints:set',
-    description: 'Add or update a `constraints.{depends|suggests|conflicts}` entry',
+    description: 'Add or update a `constraints.{depends|suggests|conflicts}` entry'
+        . ' (with `--update-only`, mutate only when the key is already present)',
 )]
 final class SetCommand extends Command
 {
@@ -89,6 +90,13 @@ final class SetCommand extends Command
                 name: 'dry-run',
                 mode: InputOption::VALUE_NONE,
                 description: 'Do not write files; only report what would change.',
+            )
+            ->addOption(
+                name: 'update-only',
+                mode: InputOption::VALUE_NONE,
+                description: 'Only mutate files where the extension key is already present under '
+                    . '`<type>`. Files where the key is absent are reported as `unchanged` '
+                    . '(no error, no write); the cross-key collision check is skipped.',
             )
             ->addOption(
                 name: 'json',
@@ -162,6 +170,7 @@ final class SetCommand extends Command
 
         $strict = (bool)$input->getOption('strict');
         $dryRun = (bool)$input->getOption('dry-run');
+        $updateOnly = (bool)$input->getOption('update-only');
 
         $rows = [];
         $exitCode = Command::SUCCESS;
@@ -174,6 +183,7 @@ final class SetCommand extends Command
                 version: $version,
                 strict: $strict,
                 dryRun: $dryRun,
+                updateOnly: $updateOnly,
             );
             $rows[] = $row;
             if ($row['state'] === ResultState::FAILURE) {
@@ -182,7 +192,7 @@ final class SetCommand extends Command
         }
 
         if ($input->getOption('json')) {
-            $output->writeln($this->renderJson($rows, $type, $extensionKey, $rawVersion, $version, $dryRun, $strict));
+            $output->writeln($this->renderJson($rows, $type, $extensionKey, $rawVersion, $version, $dryRun, $strict, $updateOnly));
 
             return $exitCode;
         }
@@ -211,6 +221,7 @@ final class SetCommand extends Command
         ?Typo3Version $version,
         bool $strict,
         bool $dryRun,
+        bool $updateOnly,
     ): array {
         $readResult = $this->reader->read($file);
         if ($readResult->extEmConf === null) {
@@ -224,6 +235,16 @@ final class SetCommand extends Command
         }
 
         $original = $readResult->extEmConf;
+        if ($updateOnly && !$this->groupCollection($original->constraints, $type)->has($extensionKey)) {
+            return [
+                'file' => $file,
+                'state' => ResultState::SUCCESS,
+                'issues' => [],
+                'action' => Action::UNCHANGED,
+                'generated' => null,
+            ];
+        }
+
         $collision = $this->findCollision($original->constraints, $type, $extensionKey);
         if ($collision !== null) {
             return [
@@ -451,6 +472,7 @@ final class SetCommand extends Command
         ?Typo3Version $version,
         bool $dryRun,
         bool $strict,
+        bool $updateOnly,
     ): string {
         $files = [];
         $summary = [
@@ -492,6 +514,7 @@ final class SetCommand extends Command
             'typo3Version' => $version?->value,
             'strict' => $strict,
             'dryRun' => $dryRun,
+            'updateOnly' => $updateOnly,
             'files' => $files,
             'summary' => $summary,
         ];
