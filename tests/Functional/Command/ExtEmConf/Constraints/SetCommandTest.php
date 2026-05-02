@@ -299,4 +299,152 @@ final class SetCommandTest extends TestCase
             @unlink($tempFile);
         }
     }
+
+    #[Test]
+    public function updateOnlyWithMissingKeySkipsWriteAndReportsUnchanged(): void
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_cset_');
+        self::assertNotFalse($tempFile);
+        $original = (string)file_get_contents(
+            dirname(__DIR__, 3) . '/ExtEmConf/Fixtures/v13_full/ext_emconf.php',
+        );
+        file_put_contents($tempFile, $original);
+
+        try {
+            $kernel = new Kernel(dirname(__DIR__, 5));
+            /** @var Application $application */
+            $application = $kernel->createContainer()->get(Application::class);
+            $tester = new CommandTester($application->find('extemconf:constraints:set'));
+
+            // `extb` is not present anywhere in the v13_full fixture.
+            $exitCode = $tester->execute([
+                'type' => 'depends',
+                'extension-key' => 'extb',
+                'paths' => [$tempFile],
+                '--constraint' => '1.0.0',
+                '--update-only' => true,
+                '--typo3-version' => '13',
+            ]);
+
+            self::assertSame(Command::SUCCESS, $exitCode);
+            self::assertStringContainsString('unchanged', $tester->getDisplay());
+            self::assertSame($original, (string)file_get_contents($tempFile));
+        } finally {
+            @unlink($tempFile);
+        }
+    }
+
+    #[Test]
+    public function updateOnlyWithExistingKeyReplacesValue(): void
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_cset_');
+        self::assertNotFalse($tempFile);
+        file_put_contents(
+            $tempFile,
+            (string)file_get_contents(
+                dirname(__DIR__, 3) . '/ExtEmConf/Fixtures/v13_full/ext_emconf.php',
+            ),
+        );
+
+        try {
+            $kernel = new Kernel(dirname(__DIR__, 5));
+            /** @var Application $application */
+            $application = $kernel->createContainer()->get(Application::class);
+            $tester = new CommandTester($application->find('extemconf:constraints:set'));
+
+            // `typo3` exists under `depends` in the fixture.
+            $exitCode = $tester->execute([
+                'type' => 'depends',
+                'extension-key' => 'typo3',
+                'paths' => [$tempFile],
+                '--constraint' => '13.0.0-13.4.99',
+                '--update-only' => true,
+                '--typo3-version' => '13',
+            ]);
+
+            self::assertSame(Command::SUCCESS, $exitCode);
+            $rewritten = (string)file_get_contents($tempFile);
+            self::assertStringContainsString("'typo3' => '13.0.0-13.4.99'", $rewritten);
+            self::assertSame(1, substr_count($rewritten, "'typo3' =>"));
+        } finally {
+            @unlink($tempFile);
+        }
+    }
+
+    #[Test]
+    public function updateOnlyWithKeyOnlyInOtherTypeSkipsWithoutCollision(): void
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_cset_');
+        self::assertNotFalse($tempFile);
+        $original = (string)file_get_contents(
+            dirname(__DIR__, 3) . '/ExtEmConf/Fixtures/v13_full/ext_emconf.php',
+        );
+        file_put_contents($tempFile, $original);
+
+        try {
+            $kernel = new Kernel(dirname(__DIR__, 5));
+            /** @var Application $application */
+            $application = $kernel->createContainer()->get(Application::class);
+            $tester = new CommandTester($application->find('extemconf:constraints:set'));
+
+            // `news` lives under `suggests` in the fixture; without `--update-only`
+            // targeting `depends` raises a cross-key FAILURE. With `--update-only`
+            // the precondition gate fires first and reports `unchanged`.
+            $exitCode = $tester->execute([
+                'type' => 'depends',
+                'extension-key' => 'news',
+                'paths' => [$tempFile],
+                '--update-only' => true,
+                '--typo3-version' => '13',
+            ]);
+
+            self::assertSame(Command::SUCCESS, $exitCode);
+            self::assertStringContainsString('unchanged', $tester->getDisplay());
+            self::assertSame($original, (string)file_get_contents($tempFile));
+        } finally {
+            @unlink($tempFile);
+        }
+    }
+
+    #[Test]
+    public function updateOnlyJsonContainsUpdateOnlyFlag(): void
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_cset_');
+        self::assertNotFalse($tempFile);
+        file_put_contents(
+            $tempFile,
+            (string)file_get_contents(
+                dirname(__DIR__, 3) . '/ExtEmConf/Fixtures/v13_full/ext_emconf.php',
+            ),
+        );
+
+        try {
+            $kernel = new Kernel(dirname(__DIR__, 5));
+            /** @var Application $application */
+            $application = $kernel->createContainer()->get(Application::class);
+            $tester = new CommandTester($application->find('extemconf:constraints:set'));
+
+            $exitCode = $tester->execute([
+                'type' => 'depends',
+                'extension-key' => 'extb',
+                'paths' => [$tempFile],
+                '--constraint' => '1.0.0',
+                '--update-only' => true,
+                '--typo3-version' => '13',
+                '--json' => true,
+            ]);
+
+            self::assertSame(Command::SUCCESS, $exitCode);
+            $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+            self::assertIsArray($payload);
+            self::assertTrue($payload['updateOnly']);
+            self::assertSame(1, $payload['summary']['unchanged']);
+            self::assertSame(0, $payload['summary']['written']);
+            self::assertSame(0, $payload['summary']['failure']);
+            self::assertSame('unchanged', $payload['files'][0]['action']);
+            self::assertNull($payload['files'][0]['generated']);
+        } finally {
+            @unlink($tempFile);
+        }
+    }
 }
