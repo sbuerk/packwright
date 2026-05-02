@@ -26,7 +26,7 @@ final class NormalizeCommandTest extends TestCase
     #[Test]
     public function dryRunReportsChangesWithoutWritingFile(): void
     {
-        $tempFile = tempnam(sys_get_temp_dir(), 'sb_releaser_normalize_');
+        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_normalize_');
         self::assertNotFalse($tempFile);
         $original = (string)file_get_contents(
             dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/deprecated_keys/ext_emconf.php',
@@ -56,7 +56,7 @@ final class NormalizeCommandTest extends TestCase
     #[Test]
     public function writeOverridesFileForDeprecatedKeysFixture(): void
     {
-        $tempFile = tempnam(sys_get_temp_dir(), 'sb_releaser_normalize_');
+        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_normalize_');
         self::assertNotFalse($tempFile);
         $original = (string)file_get_contents(
             dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/deprecated_keys/ext_emconf.php',
@@ -90,7 +90,7 @@ final class NormalizeCommandTest extends TestCase
     #[Test]
     public function unchangedActionForFixtureWithoutDeprecatedFields(): void
     {
-        $tempFile = tempnam(sys_get_temp_dir(), 'sb_releaser_normalize_');
+        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_normalize_');
         self::assertNotFalse($tempFile);
         $original = (string)file_get_contents(
             dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/minimal/ext_emconf.php',
@@ -119,7 +119,7 @@ final class NormalizeCommandTest extends TestCase
     #[Test]
     public function skippedActionAndExitOneForMalformedInput(): void
     {
-        $tempFile = tempnam(sys_get_temp_dir(), 'sb_releaser_normalize_');
+        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_normalize_');
         self::assertNotFalse($tempFile);
         file_put_contents($tempFile, '<?php this is not valid PHP');
         $beforeContent = (string)file_get_contents($tempFile);
@@ -143,7 +143,7 @@ final class NormalizeCommandTest extends TestCase
     #[Test]
     public function jsonOutputContainsGeneratedSourceForWrittenFile(): void
     {
-        $tempFile = tempnam(sys_get_temp_dir(), 'sb_releaser_normalize_');
+        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_normalize_');
         self::assertNotFalse($tempFile);
         file_put_contents(
             $tempFile,

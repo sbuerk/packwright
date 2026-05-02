@@ -264,7 +264,7 @@ final class ExtEmConfWriterTest extends TestCase
             ),
         ));
 
-        $tmpFile = tempnam(sys_get_temp_dir(), 'sb_releaser_test_') . '.php';
+        $tmpFile = tempnam(sys_get_temp_dir(), 'packwright_test_') . '.php';
         try {
             file_put_contents($tmpFile, $content);
             $result = (new ExtEmConfReader())->read($tmpFile);

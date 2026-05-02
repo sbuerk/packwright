@@ -59,7 +59,7 @@ final class ValidateCommandTest extends TestCase
     #[Test]
     public function executeReturnsFailureExitCodeOneForUnreadableFile(): void
     {
-        $tempFile = tempnam(sys_get_temp_dir(), 'sb_releaser_validate_');
+        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_validate_');
         self::assertNotFalse($tempFile);
         file_put_contents($tempFile, '<?php this is not valid PHP');
 

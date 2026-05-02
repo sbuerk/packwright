@@ -102,7 +102,7 @@ final class ExtEmConfReader
 
         try {
             $loader = static function (string $path): mixed {
-                $_EXTKEY = '__sb_releaser_sentinel__';
+                $_EXTKEY = '__packwright_sentinel__';
                 // Initialized via a typed helper so PHPStan knows $EM_CONF is
                 // array<string, mixed>; include will populate it at runtime.
                 $EM_CONF = ExtEmConfReader::makeEmConfContainer();
