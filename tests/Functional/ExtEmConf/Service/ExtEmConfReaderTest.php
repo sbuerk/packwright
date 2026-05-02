@@ -85,8 +85,8 @@ final class ExtEmConfReaderTest extends TestCase
 
         self::assertSame(ResultState::WARNING, $result->state);
         self::assertNotNull($result->extEmConf);
-        self::assertArrayHasKey('unknown_custom_key', $result->extEmConf->unknownProperties);
-        self::assertArrayHasKey('another_unknown', $result->extEmConf->unknownProperties);
+        self::assertTrue($result->extEmConf->unknownProperties->has('unknown_custom_key'));
+        self::assertTrue($result->extEmConf->unknownProperties->has('another_unknown'));
     }
 
     #[Test]

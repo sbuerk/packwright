@@ -8,6 +8,7 @@ use Packwright\ExtEmConf\Dto\Constraints\Constraints;
 use Packwright\ExtEmConf\Dto\Constraints\DependencyCollection;
 use Packwright\ExtEmConf\Dto\Constraints\MigratableConstraints;
 use Packwright\ExtEmConf\Dto\ExtEmConf;
+use Packwright\ExtEmConf\Dto\Unknown\UnknownPropertyCollection;
 use Packwright\ExtEmConf\Enum\Category;
 use Packwright\ExtEmConf\Enum\IssueSeverity;
 use Packwright\ExtEmConf\Enum\ResultState;
@@ -47,7 +48,7 @@ final class ExtEmConfNormalizer
         $createDirs = $this->normalizeCreateDirs($extEmConf, $targetTypo3Version, $droppedItems);
         $constraints = $this->normalizeMigratableConstraints($extEmConf, $droppedItems);
 
-        foreach (array_keys($extEmConf->unknownProperties) as $key) {
+        foreach ($extEmConf->unknownProperties->keys() as $key) {
             $droppedItems[] = new Issue(
                 path: $key,
                 message: sprintf('Dropped unknown property "%s".', $key),
@@ -70,7 +71,7 @@ final class ExtEmConfNormalizer
             clearCacheOnLoad: $clearCacheOnLoad,
             uploadfolder: $uploadfolder,
             createDirs: $createDirs,
-            unknownProperties: [],
+            unknownProperties: new UnknownPropertyCollection(),
         );
 
         return new NormalizationResult(

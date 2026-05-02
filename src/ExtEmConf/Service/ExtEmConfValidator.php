@@ -183,7 +183,7 @@ final class ExtEmConfValidator
      */
     private function validateUnknownProperties(ExtEmConf $extEmConf, array &$issues): void
     {
-        foreach (array_keys($extEmConf->unknownProperties) as $key) {
+        foreach ($extEmConf->unknownProperties->keys() as $key) {
             $issues[] = new Issue(
                 path: $key,
                 message: sprintf('Unknown property "%s" has no effect and will be ignored.', $key),

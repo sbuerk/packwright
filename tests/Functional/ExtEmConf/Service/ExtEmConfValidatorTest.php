@@ -11,6 +11,8 @@ use Packwright\ExtEmConf\Dto\Constraints\MigratableConstraints;
 use Packwright\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
 use Packwright\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
 use Packwright\ExtEmConf\Dto\ExtEmConf;
+use Packwright\ExtEmConf\Dto\Unknown\UnknownProperty;
+use Packwright\ExtEmConf\Dto\Unknown\UnknownPropertyCollection;
 use Packwright\ExtEmConf\Dto\Version;
 use Packwright\ExtEmConf\Enum\Category;
 use Packwright\ExtEmConf\Enum\ConstraintVersionType;
@@ -246,7 +248,9 @@ final class ExtEmConfValidatorTest extends TestCase
             state: State::STABLE,
             author: 'John Doe',
             authorEmail: 'john@example.com',
-            unknownProperties: ['my_custom_key' => 'value'],
+            unknownProperties: new UnknownPropertyCollection([
+                new UnknownProperty('my_custom_key', 'value'),
+            ]),
         ));
 
         self::assertSame(ResultState::WARNING, $result->state);

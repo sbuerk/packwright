@@ -11,6 +11,8 @@ use Packwright\ExtEmConf\Dto\Constraints\MigratableConstraints;
 use Packwright\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
 use Packwright\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
 use Packwright\ExtEmConf\Dto\ExtEmConf;
+use Packwright\ExtEmConf\Dto\Unknown\UnknownProperty;
+use Packwright\ExtEmConf\Dto\Unknown\UnknownPropertyCollection;
 use Packwright\ExtEmConf\Dto\Version;
 use Packwright\ExtEmConf\Enum\Category;
 use Packwright\ExtEmConf\Enum\ConstraintVersionType;
@@ -151,11 +153,14 @@ final class ExtEmConfNormalizerTest extends TestCase
             version: '1.0.0',
             category: Category::PLUGIN,
             state: State::STABLE,
-            unknownProperties: ['my_key' => 'value', 'another' => 42],
+            unknownProperties: new UnknownPropertyCollection([
+                new UnknownProperty('my_key', 'value'),
+                new UnknownProperty('another', 42),
+            ]),
         ));
 
         self::assertTrue($result->hasChanges);
-        self::assertSame([], $result->extEmConf->unknownProperties);
+        self::assertTrue($result->extEmConf->unknownProperties->isEmpty());
 
         $paths = $result->droppedItems->paths();
         self::assertContains('my_key', $paths);

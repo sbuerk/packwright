@@ -14,6 +14,8 @@ use Packwright\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
 use Packwright\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
 use Packwright\ExtEmConf\Dto\Constraints\VersionValue\VersionRange;
 use Packwright\ExtEmConf\Dto\ExtEmConf;
+use Packwright\ExtEmConf\Dto\Unknown\UnknownProperty;
+use Packwright\ExtEmConf\Dto\Unknown\UnknownPropertyCollection;
 use Packwright\ExtEmConf\Dto\Version;
 use Packwright\ExtEmConf\Enum\Category;
 use Packwright\ExtEmConf\Enum\ConstraintVersionType;
@@ -67,7 +69,10 @@ final class ExtEmConfWriterTest extends TestCase
             title: 'Test',
             description: 'Test.',
             version: '1.0.0',
-            unknownProperties: ['secret_key' => 'secret_value', 'another_key' => 42],
+            unknownProperties: new UnknownPropertyCollection([
+                new UnknownProperty('secret_key', 'secret_value'),
+                new UnknownProperty('another_key', 42),
+            ]),
         ));
 
         self::assertStringNotContainsString('secret_key', $output);
@@ -323,8 +328,8 @@ final class ExtEmConfWriterTest extends TestCase
         $readResult = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/invalid_keys/ext_emconf.php');
         self::assertNotNull($readResult->extEmConf);
 
-        self::assertArrayHasKey('unknown_custom_key', $readResult->extEmConf->unknownProperties);
-        self::assertArrayHasKey('another_unknown', $readResult->extEmConf->unknownProperties);
+        self::assertTrue($readResult->extEmConf->unknownProperties->has('unknown_custom_key'));
+        self::assertTrue($readResult->extEmConf->unknownProperties->has('another_unknown'));
 
         $output = (new ExtEmConfWriter())->generate($readResult->extEmConf);
         self::assertStringNotContainsString('unknown_custom_key', $output);

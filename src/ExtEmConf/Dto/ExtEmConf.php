@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Packwright\ExtEmConf\Dto;
 
 use Packwright\ExtEmConf\Dto\Constraints\Constraints;
+use Packwright\ExtEmConf\Dto\Unknown\UnknownPropertyCollection;
 use Packwright\ExtEmConf\Enum\Category;
 use Packwright\ExtEmConf\Enum\State;
 
@@ -32,9 +33,8 @@ use Packwright\ExtEmConf\Enum\State;
 final readonly class ExtEmConf
 {
     /**
-     * @param Category|string|null    $category
-     * @param State|string|null       $state
-     * @param array<string, mixed>    $unknownProperties
+     * @param Category|string|null $category
+     * @param State|string|null    $state
      */
     public function __construct(
         // --- Always-current fields (v9.5+, non-deprecated) ---
@@ -58,6 +58,6 @@ final readonly class ExtEmConf
         public ?string $createDirs = null,
 
         // --- Unknown keys encountered during reading ---
-        public array $unknownProperties = [],
+        public UnknownPropertyCollection $unknownProperties = new UnknownPropertyCollection(),
     ) {}
 }

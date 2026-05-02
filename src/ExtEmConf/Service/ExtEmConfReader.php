@@ -17,6 +17,8 @@ use Packwright\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
 use Packwright\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
 use Packwright\ExtEmConf\Dto\Constraints\VersionValue\VersionValueInterface;
 use Packwright\ExtEmConf\Dto\ExtEmConf;
+use Packwright\ExtEmConf\Dto\Unknown\UnknownProperty;
+use Packwright\ExtEmConf\Dto\Unknown\UnknownPropertyCollection;
 use Packwright\ExtEmConf\Enum\Category;
 use Packwright\ExtEmConf\Enum\ConstraintVersionType;
 use Packwright\ExtEmConf\Enum\IssueSeverity;
@@ -156,7 +158,7 @@ final class ExtEmConfReader
         $unknownProperties = [];
         foreach (array_keys($raw) as $key) {
             if (!in_array($key, self::KNOWN_KEYS, true)) {
-                $unknownProperties[$key] = $raw[$key];
+                $unknownProperties[] = new UnknownProperty(key: (string)$key, value: $raw[$key]);
                 $issues[] = new Issue(
                     path: (string)$key,
                     message: sprintf('Unknown key "%s" in ext_emconf.php.', $key),
@@ -182,7 +184,7 @@ final class ExtEmConfReader
             createDirs: array_key_exists('createDirs', $raw) && is_string($raw['createDirs'])
                 ? $raw['createDirs']
                 : null,
-            unknownProperties: $unknownProperties,
+            unknownProperties: new UnknownPropertyCollection($unknownProperties),
         );
     }
 
