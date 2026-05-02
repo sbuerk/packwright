@@ -34,3 +34,9 @@ This project targets PHP ^8.2. PHPUnit 12+ requires PHP >=8.3. Always use
 
 `DumpCompletionCommand` calls `DirectoryIterator` on that directory at startup.
 Without it, the PHAR fails with "Failed to open directory: operation failed".
+
+`composer build` produces two byte-identical PHARs in one invocation:
+`build/packwright` (from `box compile`) and `build/pkw` (copied
+afterward via `cp` + `chmod 0755`). Box only emits a single PHAR per
+`box.json`, so the alias is wired in as post-compile script steps in
+`composer.json` rather than a second box config.

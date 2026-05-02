@@ -140,7 +140,7 @@ Rules:
 - Capital letter after closing bracket
 - Enquote class names, file names, paths, method names, and similar
   technical terms in single backticks
-  (e.g. `` `Application` ``, `` `bin/sb-releaser` ``, `` `->load()` ``)
+  (e.g. `` `Application` ``, `` `bin/packwright` ``, `` `->load()` ``)
 
 ### Body (optional)
 
