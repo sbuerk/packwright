@@ -13,6 +13,137 @@ interchangeable on the command line.
 
 ---
 
+## `extemconf:list`
+
+Resolves a path / glob argument to a set of `ext_emconf.php` files and
+emits an inventory either as a human-readable table or as a JSON
+document keyed by absolute file path. Each file is read and validated;
+the result is reported alongside the discovered path so the command
+doubles as a quick triage tool for nested package trees.
+
+Unlike `extemconf:validate`, files that fail to parse are listed as
+rows with state `FAILURE` rather than aborting the run, and the exit
+code defaults to `0` so the command can be used as a pure discovery
+step in shell pipelines.
+
+### Usage
+
+```
+packwright extemconf:list <paths...> [-t <version>] [--json] [--strict]
+```
+
+### Arguments
+
+- `paths` — same semantics as `extemconf:validate` (variadic
+  literal / file / directory / `*`-glob / `**` recursive glob).
+
+### Options
+
+- `-t`, `--typo3-version` — major version to validate against.
+  Allowed values: `8`, `9`, `10`, `11`, `12`, `13`. Drives the
+  per-file validation state in the listing; when omitted only general
+  structural rules apply.
+- `--json` — emit a JSON document keyed by absolute file path
+  instead of a table. Always a JSON object (`{}` when nothing
+  matched), suitable for piping into `jq`.
+- `--strict` — exit with code `1` when any listed file ends in
+  `WARNING` or `FAILURE` state. Without this flag, the listing is
+  always exit `0` (provided the input arguments themselves are valid).
+
+### Output
+
+Default (one row per file):
+
+```
++----------------------------------+--------------------+---------+---------+--------+
+| Path                             | Title              | Version | State   | Issues |
++----------------------------------+--------------------+---------+---------+--------+
+| ./packages/my_ext/ext_emconf.php | My Extension       | 1.2.3   | SUCCESS | 0      |
+| /tmp/broken/ext_emconf.php       |                    |         | FAILURE | 1      |
++----------------------------------+--------------------+---------+---------+--------+
+```
+
+Paths beneath the current working directory render relative (with a
+leading `./`); paths elsewhere render absolute. JSON output always
+emits absolute paths as object keys.
+
+### JSON shape
+
+The top-level value is an object whose keys are absolute file paths
+and whose values carry the parsed ext_emconf data plus a validation
+block:
+
+```json
+{
+  "/abs/path/my_ext/ext_emconf.php": {
+    "data": {
+      "title": "My Extension",
+      "description": "...",
+      "version": "1.2.3",
+      "category": "plugin",
+      "state": "stable",
+      "author": "John Doe",
+      "author_email": "john@example.com",
+      "author_company": "ACME Corp",
+      "constraints": {
+        "depends": { "typo3": "13.4.0-13.4.99" },
+        "conflicts": {},
+        "suggests": {},
+        "migratable": { "depend": {}, "suggest": {}, "conflict": {} }
+      },
+      "autoload": { "psr-4": { "Vendor\\MyExt\\": "Classes/" }, "classmap": [] },
+      "autoload-dev": { "psr-4": {}, "classmap": [] },
+      "clearCacheOnLoad": null,
+      "uploadfolder": null,
+      "createDirs": null,
+      "unknownProperties": {}
+    },
+    "validation": {
+      "state": "SUCCESS",
+      "isValid": true,
+      "issues": []
+    }
+  },
+  "/abs/path/broken/ext_emconf.php": {
+    "data": null,
+    "validation": {
+      "state": "FAILURE",
+      "isValid": false,
+      "issues": [
+        { "severity": "ERROR", "path": "", "message": "Failed to load or parse \"...\"." }
+      ]
+    }
+  }
+}
+```
+
+`data` is `null` for files that failed to read; `isValid` is `false`
+exactly when `state` is `FAILURE` (warnings still count as valid).
+
+The keyed-by-path shape is designed for `jq` iteration. Examples:
+
+```sh
+# List every file that failed to parse:
+pkw extemconf:list 'packages/**/ext_emconf.php' --json \
+  | jq -r 'to_entries[] | select(.value.validation.state == "FAILURE") | .key'
+
+# Print "<path>: <title> <version>" for each file:
+pkw extemconf:list 'packages/**/ext_emconf.php' --json \
+  | jq -r 'to_entries[] | "\(.key): \(.value.data.title // "-") \(.value.data.version // "-")"'
+```
+
+### Exit codes
+
+- `0` — listing completed (regardless of per-file state, unless
+  `--strict` is set).
+- `0` — `--strict` is set and every file reports `SUCCESS`.
+- `1` — `--strict` is set and at least one file reports `WARNING`
+  or `FAILURE`.
+- `2` — usage error (missing literal path, invalid
+  `--typo3-version`).
+
+---
+
 ## `extemconf:validate`
 
 Reads each input file, runs `ExtEmConfValidator`, and reports the result
