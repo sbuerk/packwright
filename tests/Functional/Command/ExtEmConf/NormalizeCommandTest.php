@@ -263,8 +263,10 @@ final class NormalizeCommandTest extends TestCase
 
             $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
             self::assertIsArray($payload);
-            self::assertSame(realpath($tempFile), $payload['files'][0]['path']);
-            self::assertStringStartsWith('/', $payload['files'][0]['path']);
+            $expected = realpath($tempFile);
+            self::assertNotFalse($expected);
+            self::assertSame($expected, $payload['files'][0]['path']);
+            self::assertStringStartsWith('/', $expected);
         } finally {
             @unlink($tempFile);
         }
