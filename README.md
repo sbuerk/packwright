@@ -47,7 +47,8 @@ roadmap.
   validation.
 - `extemconf:constraints:set` — add or update an entry under
   `constraints.{depends|suggests|conflicts}` with cross-key collision
-  detection.
+  detection. Pass `--update-only` to skip files where the key is not
+  already present (idempotent batch updates).
 - `extemconf:constraints:unset` — remove an entry from
   `constraints.{depends|suggests|conflicts}` (idempotent).
 
