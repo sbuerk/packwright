@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Packwright\Tests\Functional\ExtEmConf\Service;
 
 use Packwright\ExtEmConf\Dto\Autoload;
+use Packwright\ExtEmConf\Dto\Autoload\ClassmapCollection;
+use Packwright\ExtEmConf\Dto\Autoload\ClassmapEntry;
 use Packwright\ExtEmConf\Dto\Autoload\Psr4Collection;
 use Packwright\ExtEmConf\Dto\Autoload\Psr4Entry;
 use Packwright\ExtEmConf\Dto\Constraints\Constraints;
@@ -334,5 +336,99 @@ final class ExtEmConfWriterTest extends TestCase
         $output = (new ExtEmConfWriter())->generate($readResult->extEmConf);
         self::assertStringNotContainsString('unknown_custom_key', $output);
         self::assertStringNotContainsString('another_unknown', $output);
+    }
+
+    #[Test]
+    public function generateOmitsAutoloadPsr4WhenEmpty(): void
+    {
+        $output = (new ExtEmConfWriter())->generate(new ExtEmConf(
+            title: 'Test',
+            description: 'Test.',
+            version: '1.0.0',
+            autoload: new Autoload(
+                classmap: new ClassmapCollection([new ClassmapEntry(path: 'Classes/Legacy/')]),
+            ),
+        ));
+
+        self::assertStringContainsString("'autoload'", $output);
+        self::assertStringContainsString("'classmap'", $output);
+        self::assertStringNotContainsString("'psr-4'", $output);
+    }
+
+    #[Test]
+    public function generateOmitsAutoloadClassmapWhenEmpty(): void
+    {
+        $output = (new ExtEmConfWriter())->generate(new ExtEmConf(
+            title: 'Test',
+            description: 'Test.',
+            version: '1.0.0',
+            autoload: new Autoload(
+                psr4: new Psr4Collection([new Psr4Entry(namespace: 'MyVendor\\MyExt\\', path: 'Classes/')]),
+            ),
+        ));
+
+        self::assertStringContainsString("'autoload'", $output);
+        self::assertStringContainsString("'psr-4'", $output);
+        self::assertStringNotContainsString("'classmap'", $output);
+    }
+
+    #[Test]
+    public function generateOmitsAutoloadKeyWhenBothEmpty(): void
+    {
+        $output = (new ExtEmConfWriter())->generate(new ExtEmConf(
+            title: 'Test',
+            description: 'Test.',
+            version: '1.0.0',
+            autoload: new Autoload(),
+        ));
+
+        self::assertStringNotContainsString("'autoload'", $output);
+    }
+
+    #[Test]
+    public function generateOmitsAutoloadDevPsr4WhenEmpty(): void
+    {
+        $output = (new ExtEmConfWriter())->generate(new ExtEmConf(
+            title: 'Test',
+            description: 'Test.',
+            version: '1.0.0',
+            autoloadDev: new Autoload(
+                classmap: new ClassmapCollection([new ClassmapEntry(path: 'Tests/Classmap/')]),
+            ),
+        ));
+
+        self::assertStringContainsString("'autoload-dev'", $output);
+        self::assertStringContainsString("'classmap'", $output);
+        self::assertStringNotContainsString("'psr-4'", $output);
+    }
+
+    #[Test]
+    public function generateOmitsAutoloadDevClassmapWhenEmpty(): void
+    {
+        $output = (new ExtEmConfWriter())->generate(new ExtEmConf(
+            title: 'Test',
+            description: 'Test.',
+            version: '1.0.0',
+            autoloadDev: new Autoload(
+                psr4: new Psr4Collection([new Psr4Entry(namespace: 'MyVendor\\MyExt\\Tests\\', path: 'Tests/')]),
+            ),
+        ));
+
+        self::assertStringContainsString("'autoload-dev'", $output);
+        self::assertStringContainsString("'psr-4'", $output);
+        self::assertStringNotContainsString("'classmap'", $output);
+    }
+
+    #[Test]
+    public function generateOmitsAutoloadDevKeyWhenBothEmpty(): void
+    {
+        $output = (new ExtEmConfWriter())->generate(new ExtEmConf(
+            title: 'Test',
+            description: 'Test.',
+            version: '1.0.0',
+            autoloadDev: new Autoload(),
+        ));
+
+        self::assertStringNotContainsString("'autoload-dev'", $output);
     }
 }
