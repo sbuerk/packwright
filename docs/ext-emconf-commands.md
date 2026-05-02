@@ -29,10 +29,17 @@ packwright extemconf:validate <paths...> [-t <version>] [--json] [--fail-on-warn
 - `paths` — one or more file paths, directories, or glob patterns. Required.
   - A literal file path must exist.
   - A directory is walked recursively for `ext_emconf.php` files.
-  - A pattern containing `*`, `?`, or `[` is resolved via `glob()` with
-    `GLOB_BRACE`.
-  - `**` is **not** supported by the resolver. Pass a directory or rely
-    on shell expansion when recursive matching is needed.
+  - A pattern containing `*`, `?`, `[`, or `{` is resolved via `glob()`
+    with `GLOB_BRACE`. A single `*` only matches one path segment.
+  - A pattern containing a `**` path segment is recursive: `**` matches
+    zero or more intermediate path segments, allowing one pattern to
+    span any depth. Quote the pattern in the shell to keep it from
+    being expanded by the shell first. Examples:
+    - `'packages/**/ext_emconf.php'` — every `ext_emconf.php` under
+      `packages/`, regardless of nesting depth (including
+      `packages/ext_emconf.php` itself).
+    - `'packages/*/**/ext_emconf.php'` — same, but constrained to
+      exactly one vendor directory under `packages/`.
 
 ### Options
 
@@ -725,6 +732,12 @@ packwright extemconf:validate packages/
 packwright extemconf:validate packages/*/ext_emconf.php -t 13 --json | jq .summary
 ```
 
+### Validate every `ext_emconf.php` at any depth via recursive glob
+
+```
+packwright extemconf:validate 'packages/**/ext_emconf.php' -t 13 --json | jq .summary
+```
+
 ### Preview normalization without writing
 
 ```
@@ -786,9 +799,14 @@ packwright extemconf:autoload-dev:psr4:unset "Vendor\\Ext\\Tests\\" \
 
 ## Implementation notes
 
-- Both commands depend on `Packwright\ExtEmConf\Service\PathResolver` to
+- All commands depend on `Packwright\ExtEmConf\Service\PathResolver` to
   resolve their arguments. The resolver returns a sorted, deduplicated
-  list of absolute paths.
+  list of absolute paths. Single-`*` patterns are expanded via native
+  `glob()` with `GLOB_BRACE`; patterns containing a `**` path segment
+  are walked with `Symfony\Component\Finder\Finder` and matched by a
+  regex compiled from the pattern (`**` → zero or more segments,
+  `*` → one segment, `?`, `[...]`, and `{a,b}` keep their familiar
+  meanings).
 - Read failures short-circuit per file: validate reports the read
   issues with `state=FAILURE`; normalize reports `action=skipped` and
   leaves the file alone.
