@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Packwright\Command\ExtEmConf;
 
+use Packwright\Console\DisplayPathFormatter;
 use Packwright\ExtEmConf\Enum\ResultState;
 use Packwright\ExtEmConf\Enum\Typo3Version;
 use Packwright\ExtEmConf\Result\Issue;
@@ -36,6 +37,7 @@ final class NormalizeCommand extends Command
         private readonly ExtEmConfReader $reader,
         private readonly ExtEmConfNormalizer $normalizer,
         private readonly ExtEmConfWriter $writer,
+        private readonly DisplayPathFormatter $displayPath,
     ) {
         parent::__construct();
     }
@@ -221,7 +223,7 @@ final class NormalizeCommand extends Command
 
         foreach ($rows as $row) {
             $table->addRow([
-                $row['file'],
+                $this->displayPath->format($row['file']),
                 $versionLabel,
                 $this->stateLabel($row['state']),
                 $row['hasChanges'] ? 'yes' : 'no',
@@ -234,6 +236,17 @@ final class NormalizeCommand extends Command
 
         if ($output->isVerbose()) {
             $this->renderDroppedDetails($rows, $output);
+
+            return;
+        }
+
+        foreach ($rows as $row) {
+            if ($row['droppedItems'] !== []) {
+                $output->writeln('');
+                $output->writeln('<info>Tip: re-run with -v to see dropped-item details.</info>');
+
+                return;
+            }
         }
     }
 
@@ -247,7 +260,7 @@ final class NormalizeCommand extends Command
                 continue;
             }
             $output->writeln('');
-            $output->writeln(sprintf('<comment>%s</comment>', $row['file']));
+            $output->writeln(sprintf('<comment>%s</comment>', $this->displayPath->format($row['file'])));
             foreach ($row['droppedItems'] as $issue) {
                 $output->writeln(sprintf(
                     '  %s  %s  %s',

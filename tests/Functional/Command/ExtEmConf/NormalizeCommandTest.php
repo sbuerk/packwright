@@ -9,6 +9,7 @@ use Packwright\Kernel;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;
 
 final class NormalizeCommandTest extends TestCase
@@ -177,6 +178,186 @@ final class NormalizeCommandTest extends TestCase
             self::assertIsString($payload['files'][0]['generated']);
             self::assertStringStartsWith('<?php', $payload['files'][0]['generated']);
             self::assertStringNotContainsString('clearCacheOnLoad', $payload['files'][0]['generated']);
+        } finally {
+            @unlink($tempFile);
+        }
+    }
+
+    #[Test]
+    public function tableShowsRelativePathForFixtureBelowCwd(): void
+    {
+        $cwd = (string)getcwd();
+        $fixture = dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/deprecated_keys/ext_emconf.php';
+        self::assertStringStartsWith($cwd . '/', $fixture);
+        $expectedRelative = './' . substr($fixture, strlen($cwd) + 1);
+
+        $kernel = new Kernel(dirname(__DIR__, 4));
+        /** @var Application $application */
+        $application = $kernel->createContainer()->get(Application::class);
+        $tester = new CommandTester($application->find('extemconf:normalize'));
+
+        $tester->execute([
+            'paths' => [$fixture],
+            '--typo3-version' => '13',
+            '--dry-run' => true,
+        ]);
+
+        self::assertStringContainsString($expectedRelative, $tester->getDisplay());
+    }
+
+    #[Test]
+    public function tableShowsAbsolutePathForTempFileOutsideCwd(): void
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_normalize_');
+        self::assertNotFalse($tempFile);
+        file_put_contents(
+            $tempFile,
+            (string)file_get_contents(
+                dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/deprecated_keys/ext_emconf.php',
+            ),
+        );
+
+        try {
+            $kernel = new Kernel(dirname(__DIR__, 4));
+            /** @var Application $application */
+            $application = $kernel->createContainer()->get(Application::class);
+            $tester = new CommandTester($application->find('extemconf:normalize'));
+
+            $tester->execute([
+                'paths' => [$tempFile],
+                '--typo3-version' => '13',
+                '--dry-run' => true,
+            ]);
+
+            self::assertStringContainsString($tempFile, $tester->getDisplay());
+            self::assertStringNotContainsString('./' . $tempFile, $tester->getDisplay());
+        } finally {
+            @unlink($tempFile);
+        }
+    }
+
+    #[Test]
+    public function jsonOutputEmitsAbsolutePath(): void
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_normalize_');
+        self::assertNotFalse($tempFile);
+        file_put_contents(
+            $tempFile,
+            (string)file_get_contents(
+                dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/deprecated_keys/ext_emconf.php',
+            ),
+        );
+
+        try {
+            $kernel = new Kernel(dirname(__DIR__, 4));
+            /** @var Application $application */
+            $application = $kernel->createContainer()->get(Application::class);
+            $tester = new CommandTester($application->find('extemconf:normalize'));
+
+            $tester->execute([
+                'paths' => [$tempFile],
+                '--typo3-version' => '13',
+                '--dry-run' => true,
+                '--json' => true,
+            ]);
+
+            $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+            self::assertIsArray($payload);
+            self::assertSame(realpath($tempFile), $payload['files'][0]['path']);
+            self::assertStringStartsWith('/', $payload['files'][0]['path']);
+        } finally {
+            @unlink($tempFile);
+        }
+    }
+
+    #[Test]
+    public function hintIsShownWhenDroppedItemsExistAndNotVerbose(): void
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_normalize_');
+        self::assertNotFalse($tempFile);
+        file_put_contents(
+            $tempFile,
+            (string)file_get_contents(
+                dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/deprecated_keys/ext_emconf.php',
+            ),
+        );
+
+        try {
+            $kernel = new Kernel(dirname(__DIR__, 4));
+            /** @var Application $application */
+            $application = $kernel->createContainer()->get(Application::class);
+            $tester = new CommandTester($application->find('extemconf:normalize'));
+
+            $tester->execute([
+                'paths' => [$tempFile],
+                '--typo3-version' => '13',
+                '--dry-run' => true,
+            ]);
+
+            self::assertStringContainsString('re-run with -v', $tester->getDisplay());
+        } finally {
+            @unlink($tempFile);
+        }
+    }
+
+    #[Test]
+    public function hintIsHiddenInVerboseMode(): void
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_normalize_');
+        self::assertNotFalse($tempFile);
+        file_put_contents(
+            $tempFile,
+            (string)file_get_contents(
+                dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/deprecated_keys/ext_emconf.php',
+            ),
+        );
+
+        try {
+            $kernel = new Kernel(dirname(__DIR__, 4));
+            /** @var Application $application */
+            $application = $kernel->createContainer()->get(Application::class);
+            $tester = new CommandTester($application->find('extemconf:normalize'));
+
+            $tester->execute(
+                input: [
+                    'paths' => [$tempFile],
+                    '--typo3-version' => '13',
+                    '--dry-run' => true,
+                ],
+                options: ['verbosity' => OutputInterface::VERBOSITY_VERBOSE],
+            );
+
+            self::assertStringNotContainsString('re-run with -v', $tester->getDisplay());
+        } finally {
+            @unlink($tempFile);
+        }
+    }
+
+    #[Test]
+    public function hintIsHiddenWhenNoDroppedItems(): void
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_normalize_');
+        self::assertNotFalse($tempFile);
+        file_put_contents(
+            $tempFile,
+            (string)file_get_contents(
+                dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/minimal/ext_emconf.php',
+            ),
+        );
+
+        try {
+            $kernel = new Kernel(dirname(__DIR__, 4));
+            /** @var Application $application */
+            $application = $kernel->createContainer()->get(Application::class);
+            $tester = new CommandTester($application->find('extemconf:normalize'));
+
+            $tester->execute([
+                'paths' => [$tempFile],
+                '--typo3-version' => '13',
+                '--dry-run' => true,
+            ]);
+
+            self::assertStringNotContainsString('re-run with -v', $tester->getDisplay());
         } finally {
             @unlink($tempFile);
         }

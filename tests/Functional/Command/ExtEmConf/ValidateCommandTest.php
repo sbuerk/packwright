@@ -162,4 +162,201 @@ final class ValidateCommandTest extends TestCase
         self::assertStringContainsString('WARNING', $tester->getDisplay());
         self::assertStringContainsString('unknown_custom_key', $tester->getDisplay());
     }
+
+    #[Test]
+    public function tableShowsRelativePathForFixtureBelowCwd(): void
+    {
+        $cwd = (string)getcwd();
+        $fixture = dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/invalid_keys/ext_emconf.php';
+        self::assertStringStartsWith($cwd . '/', $fixture);
+        $expectedRelative = './' . substr($fixture, strlen($cwd) + 1);
+
+        $kernel = new Kernel(dirname(__DIR__, 4));
+        /** @var Application $application */
+        $application = $kernel->createContainer()->get(Application::class);
+        $tester = new CommandTester($application->find('extemconf:validate'));
+
+        $tester->execute(['paths' => [$fixture]]);
+
+        self::assertStringContainsString($expectedRelative, $tester->getDisplay());
+    }
+
+    #[Test]
+    public function tableShowsAbsolutePathForTempFileOutsideCwd(): void
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_validate_');
+        self::assertNotFalse($tempFile);
+        file_put_contents($tempFile, '<?php this is not valid PHP');
+
+        try {
+            $kernel = new Kernel(dirname(__DIR__, 4));
+            /** @var Application $application */
+            $application = $kernel->createContainer()->get(Application::class);
+            $tester = new CommandTester($application->find('extemconf:validate'));
+
+            $tester->execute(['paths' => [$tempFile]]);
+
+            self::assertStringContainsString($tempFile, $tester->getDisplay());
+            self::assertStringNotContainsString('./' . $tempFile, $tester->getDisplay());
+        } finally {
+            @unlink($tempFile);
+        }
+    }
+
+    #[Test]
+    public function jsonOutputEmitsAbsolutePath(): void
+    {
+        $fixture = dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/minimal/ext_emconf.php';
+
+        $kernel = new Kernel(dirname(__DIR__, 4));
+        /** @var Application $application */
+        $application = $kernel->createContainer()->get(Application::class);
+        $tester = new CommandTester($application->find('extemconf:validate'));
+
+        $tester->execute([
+            'paths' => [$fixture],
+            '--json' => true,
+        ]);
+
+        $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
+        self::assertSame(realpath($fixture), $payload['files'][0]['path']);
+        self::assertStringStartsWith('/', $payload['files'][0]['path']);
+    }
+
+    #[Test]
+    public function failOnWarningExitsOneForWarningFixture(): void
+    {
+        $kernel = new Kernel(dirname(__DIR__, 4));
+        /** @var Application $application */
+        $application = $kernel->createContainer()->get(Application::class);
+        $tester = new CommandTester($application->find('extemconf:validate'));
+
+        $exitCode = $tester->execute([
+            'paths' => [dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/invalid_keys/ext_emconf.php'],
+            '--fail-on-warning' => true,
+        ]);
+
+        self::assertSame(Command::FAILURE, $exitCode);
+        self::assertStringContainsString('WARNING', $tester->getDisplay());
+    }
+
+    #[Test]
+    public function failOnWarningExitsZeroForCleanFixture(): void
+    {
+        $kernel = new Kernel(dirname(__DIR__, 4));
+        /** @var Application $application */
+        $application = $kernel->createContainer()->get(Application::class);
+        $tester = new CommandTester($application->find('extemconf:validate'));
+
+        $exitCode = $tester->execute([
+            'paths' => [dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/minimal/ext_emconf.php'],
+            '--fail-on-warning' => true,
+        ]);
+
+        self::assertSame(Command::SUCCESS, $exitCode);
+    }
+
+    #[Test]
+    public function failOnWarningStillExitsOneForFailure(): void
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_validate_');
+        self::assertNotFalse($tempFile);
+        file_put_contents($tempFile, '<?php this is not valid PHP');
+
+        try {
+            $kernel = new Kernel(dirname(__DIR__, 4));
+            /** @var Application $application */
+            $application = $kernel->createContainer()->get(Application::class);
+            $tester = new CommandTester($application->find('extemconf:validate'));
+
+            $exitCode = $tester->execute([
+                'paths' => [$tempFile],
+                '--fail-on-warning' => true,
+            ]);
+
+            self::assertSame(Command::FAILURE, $exitCode);
+        } finally {
+            @unlink($tempFile);
+        }
+    }
+
+    #[Test]
+    public function withoutFailOnWarningWarningStillExitsZero(): void
+    {
+        $kernel = new Kernel(dirname(__DIR__, 4));
+        /** @var Application $application */
+        $application = $kernel->createContainer()->get(Application::class);
+        $tester = new CommandTester($application->find('extemconf:validate'));
+
+        $exitCode = $tester->execute([
+            'paths' => [dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/invalid_keys/ext_emconf.php'],
+        ]);
+
+        self::assertSame(Command::SUCCESS, $exitCode);
+    }
+
+    #[Test]
+    public function hintIsShownWhenIssuesExistAndNotVerbose(): void
+    {
+        $kernel = new Kernel(dirname(__DIR__, 4));
+        /** @var Application $application */
+        $application = $kernel->createContainer()->get(Application::class);
+        $tester = new CommandTester($application->find('extemconf:validate'));
+
+        $tester->execute([
+            'paths' => [dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/invalid_keys/ext_emconf.php'],
+        ]);
+
+        self::assertStringContainsString('re-run with -v', $tester->getDisplay());
+    }
+
+    #[Test]
+    public function hintIsHiddenInVerboseMode(): void
+    {
+        $kernel = new Kernel(dirname(__DIR__, 4));
+        /** @var Application $application */
+        $application = $kernel->createContainer()->get(Application::class);
+        $tester = new CommandTester($application->find('extemconf:validate'));
+
+        $tester->execute(
+            input: ['paths' => [dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/invalid_keys/ext_emconf.php']],
+            options: ['verbosity' => OutputInterface::VERBOSITY_VERBOSE],
+        );
+
+        self::assertStringNotContainsString('re-run with -v', $tester->getDisplay());
+    }
+
+    #[Test]
+    public function hintIsHiddenWhenNoIssues(): void
+    {
+        $kernel = new Kernel(dirname(__DIR__, 4));
+        /** @var Application $application */
+        $application = $kernel->createContainer()->get(Application::class);
+        $tester = new CommandTester($application->find('extemconf:validate'));
+
+        $tester->execute([
+            'paths' => [dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/minimal/ext_emconf.php'],
+        ]);
+
+        self::assertStringNotContainsString('re-run with -v', $tester->getDisplay());
+    }
+
+    #[Test]
+    public function hintIsHiddenInJsonMode(): void
+    {
+        $kernel = new Kernel(dirname(__DIR__, 4));
+        /** @var Application $application */
+        $application = $kernel->createContainer()->get(Application::class);
+        $tester = new CommandTester($application->find('extemconf:validate'));
+
+        $tester->execute([
+            'paths' => [dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/invalid_keys/ext_emconf.php'],
+            '--json' => true,
+        ]);
+
+        self::assertStringNotContainsString('re-run with -v', $tester->getDisplay());
+        $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
+    }
 }

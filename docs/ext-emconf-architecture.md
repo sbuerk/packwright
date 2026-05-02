@@ -401,3 +401,20 @@ absent in writer output.
    Inline all construction directly in each test method.
 3. **Named arguments follow constructor definition order.** Skipping optional
    parameters is fine; reordering them is not.
+
+---
+
+## Console output
+
+`Packwright\ExtEmConf\Service\PathResolver` returns sorted, deduplicated
+absolute paths via `realpath()` — those are the canonical form used in
+JSON output and in all internal logic.
+
+For human-readable table output, both console commands run paths through
+`Packwright\Console\DisplayPathFormatter`. The formatter is purely
+string-based: it compares the absolute path against the current working
+directory and prepends `./` when the path is beneath it; otherwise it
+returns the path unchanged. It never touches the filesystem, so a
+symlinked working directory whose realpath differs from `getcwd()` simply
+falls through to absolute paths — predictable and explicit. JSON output
+is always absolute and never goes through the formatter.

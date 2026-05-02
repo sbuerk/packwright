@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Packwright\Command\ExtEmConf;
 
+use Packwright\Console\DisplayPathFormatter;
 use Packwright\ExtEmConf\Enum\IssueSeverity;
 use Packwright\ExtEmConf\Enum\ResultState;
 use Packwright\ExtEmConf\Enum\Typo3Version;
@@ -30,6 +31,7 @@ final class ValidateCommand extends Command
         private readonly PathResolver $pathResolver,
         private readonly ExtEmConfReader $reader,
         private readonly ExtEmConfValidator $validator,
+        private readonly DisplayPathFormatter $displayPath,
     ) {
         parent::__construct();
     }
@@ -52,6 +54,11 @@ final class ValidateCommand extends Command
                 name: 'json',
                 mode: InputOption::VALUE_NONE,
                 description: 'Output a JSON document instead of a table.',
+            )
+            ->addOption(
+                name: 'fail-on-warning',
+                mode: InputOption::VALUE_NONE,
+                description: 'Exit with code 1 when any file ends in WARNING state.',
             );
     }
 
@@ -87,13 +94,23 @@ final class ValidateCommand extends Command
         }
 
         $rows = [];
-        $exitCode = Command::SUCCESS;
+        $hasWarnings = false;
+        $hasFailures = false;
         foreach ($files as $file) {
             $row = $this->processFile($file, $version);
             $rows[] = $row;
             if ($row['state'] === ResultState::FAILURE) {
-                $exitCode = Command::FAILURE;
+                $hasFailures = true;
+            } elseif ($row['state'] === ResultState::WARNING) {
+                $hasWarnings = true;
             }
+        }
+
+        $exitCode = Command::SUCCESS;
+        if ($hasFailures) {
+            $exitCode = Command::FAILURE;
+        } elseif ($input->getOption('fail-on-warning') && $hasWarnings) {
+            $exitCode = Command::FAILURE;
         }
 
         if ($input->getOption('json')) {
@@ -174,7 +191,7 @@ final class ValidateCommand extends Command
             $warnings = $this->countBySeverity($row['issues'], IssueSeverity::WARNING);
 
             $table->addRow([
-                $row['file'],
+                $this->displayPath->format($row['file']),
                 $versionLabel,
                 $this->stateLabel($row['state']),
                 (string)$errors,
@@ -186,6 +203,17 @@ final class ValidateCommand extends Command
 
         if ($output->isVerbose()) {
             $this->renderIssueDetails($rows, $output);
+
+            return;
+        }
+
+        foreach ($rows as $row) {
+            if ($row['issues'] !== []) {
+                $output->writeln('');
+                $output->writeln('<info>Tip: re-run with -v to see per-issue details.</info>');
+
+                return;
+            }
         }
     }
 
@@ -199,7 +227,7 @@ final class ValidateCommand extends Command
                 continue;
             }
             $output->writeln('');
-            $output->writeln(sprintf('<comment>%s</comment>', $row['file']));
+            $output->writeln(sprintf('<comment>%s</comment>', $this->displayPath->format($row['file'])));
             foreach ($row['issues'] as $issue) {
                 $output->writeln(sprintf(
                     '  %s  %s  %s',

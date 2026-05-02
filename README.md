@@ -84,6 +84,9 @@ packwright extemconf:validate path/to/ext_emconf.php
 packwright extemconf:normalize path/to/ext_emconf.php
 ```
 
+Use `--fail-on-warning` with `extemconf:validate` to also fail on
+`WARNING`-state files (useful in CI).
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, the test

@@ -21,7 +21,7 @@ either as a table or as a JSON document.
 ### Usage
 
 ```
-packwright extemconf:validate <paths...> [-t <version>] [--json] [-v]
+packwright extemconf:validate <paths...> [-t <version>] [--json] [--fail-on-warning] [-v]
 ```
 
 ### Arguments
@@ -41,27 +41,37 @@ packwright extemconf:validate <paths...> [-t <version>] [--json] [-v]
   rules are skipped.
 - `--json` — print a JSON document instead of a table; suppresses all other
   output so the result can be piped.
+- `--fail-on-warning` — exit with code `1` when any file ends in `WARNING`
+  state. Without this flag, only `FAILURE` files trigger a non-zero exit.
 - `-v` — verbose mode lists every issue under the table
-  (`severity  path  message`).
+  (`severity  path  message`). When `-v` is omitted and at least one file
+  reported issues, the table is followed by a `Tip: re-run with -v …` line
+  in table mode.
 
 ### Exit codes
 
-- `0` — all files in `SUCCESS` or `WARNING` state.
-- `1` — at least one file in `FAILURE` state.
+- `0` — no `FAILURE` (and, when `--fail-on-warning` is given, also no
+  `WARNING`).
+- `1` — at least one file in `FAILURE` state, **or** any file in `WARNING`
+  state when `--fail-on-warning` is set.
 - `2` — usage error (no files matched, missing literal path, invalid
   `--typo3-version`).
 
 ### Table layout
 
 ```
-+-----------+----------+---------+--------+----------+
-| File      | TYPO3    | State   | Errors | Warnings |
-+-----------+----------+---------+--------+----------+
-| /abs/...  | TYPO3 v13| SUCCESS | 0      | 0        |
-+-----------+----------+---------+--------+----------+
++--------------------------------------+----------+---------+--------+----------+
+| File                                 | TYPO3    | State   | Errors | Warnings |
++--------------------------------------+----------+---------+--------+----------+
+| ./packages/my_ext/ext_emconf.php     | TYPO3 v13| SUCCESS | 0      | 0        |
++--------------------------------------+----------+---------+--------+----------+
 ```
 
 The `TYPO3` column reads `any` when `--typo3-version` is omitted.
+
+Paths beneath the current working directory render relative (with a
+leading `./`); paths elsewhere render absolute. JSON output always emits
+absolute paths.
 
 ### JSON shape
 
@@ -112,7 +122,13 @@ Same semantics as `extemconf:validate`: variadic literal/file/directory/glob.
 - `--dry-run` — do not write files; only report what would change.
 - `--json` — print a JSON document instead of a table.
 - `-v` — verbose mode lists dropped items under the table
-  (`severity  path  message`).
+  (`severity  path  message`). When `-v` is omitted and at least one file
+  produced dropped items, the table is followed by a
+  `Tip: re-run with -v …` line in table mode.
+
+Paths beneath the current working directory render relative (with a
+leading `./`); paths elsewhere render absolute. JSON output always emits
+absolute paths.
 
 ### Per-file action
 
