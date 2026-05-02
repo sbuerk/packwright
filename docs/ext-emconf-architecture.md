@@ -373,6 +373,29 @@ included with an inline `// @deprecated` comment. Fields in
 - `$targetTypo3Version->value >= 9` — omit `uploadfolder`, `createDirs`
 - `$targetTypo3Version->value >= 12` — omit `clearCacheOnLoad`
 
+**Write-time cleanup chain:**
+
+The writer emits clean files: empty container blocks are dropped rather
+than serialised as `'<key>' => []`. The DTO is **not** mutated — the
+cleanup is purely a serialisation concern, applied after normalisation
+or any other DTO change has happened. The chain runs innermost-first
+so a parent block disappears once all of its children are elided:
+
+1. `constraints.depends` is empty → omit the `depends` sub-key.
+2. `constraints.conflicts` is empty → omit the `conflicts` sub-key.
+3. `constraints.suggests` is empty → omit the `suggests` sub-key.
+4. `constraints` has no remaining sub-keys → omit the `constraints` key.
+5. `autoload.psr-4` is empty → omit the `psr-4` sub-key.
+6. `autoload.classmap` is empty → omit the `classmap` sub-key.
+7. `autoload` has no remaining sub-keys → omit the `autoload` key.
+8. `autoload-dev.psr-4` is empty → omit the `psr-4` sub-key.
+9. `autoload-dev.classmap` is empty → omit the `classmap` sub-key.
+10. `autoload-dev` has no remaining sub-keys → omit the `autoload-dev` key.
+
+A round-trip read → write of a file that already conforms is a no-op:
+the `extemconf:set` family of commands relies on this to report
+`unchanged` when no semantic change has occurred.
+
 **Output:** `string` (PHP source)
 
 ---
