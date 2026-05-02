@@ -189,15 +189,15 @@ PHP);
         self::assertNotNull($result->extEmConf);
 
         $migratable = $result->extEmConf->constraints->migratable;
-        self::assertArrayHasKey('depend', $migratable);
-        self::assertArrayHasKey('suggest', $migratable);
-        self::assertArrayHasKey('conflict', $migratable);
+        self::assertFalse($migratable->depend->isEmpty());
+        self::assertFalse($migratable->suggest->isEmpty());
+        self::assertFalse($migratable->conflict->isEmpty());
 
-        self::assertCount(2, $migratable['depend']);
-        self::assertCount(1, $migratable['suggest']);
-        self::assertCount(1, $migratable['conflict']);
+        self::assertCount(2, $migratable->depend);
+        self::assertCount(1, $migratable->suggest);
+        self::assertCount(1, $migratable->conflict);
 
-        $phpDep = iterator_to_array($migratable['depend'])['php'] ?? null;
+        $phpDep = iterator_to_array($migratable->depend)['php'] ?? null;
         self::assertNotNull($phpDep);
         self::assertInstanceOf(VersionRange::class, $phpDep->version);
     }
@@ -235,7 +235,7 @@ PHP);
         $issuePaths = $result->issues->paths();
         self::assertContains('constraints.depend.broken', $issuePaths);
 
-        $migratable = $result->extEmConf?->constraints->migratable['depend'] ?? null;
+        $migratable = $result->extEmConf?->constraints->migratable->depend;
         self::assertNotNull($migratable);
         $brokenDep = iterator_to_array($migratable)['broken'] ?? null;
         self::assertNotNull($brokenDep);

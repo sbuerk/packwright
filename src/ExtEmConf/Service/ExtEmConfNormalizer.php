@@ -6,6 +6,7 @@ namespace Packwright\ExtEmConf\Service;
 
 use Packwright\ExtEmConf\Dto\Constraints\Constraints;
 use Packwright\ExtEmConf\Dto\Constraints\DependencyCollection;
+use Packwright\ExtEmConf\Dto\Constraints\MigratableConstraints;
 use Packwright\ExtEmConf\Dto\ExtEmConf;
 use Packwright\ExtEmConf\Enum\Category;
 use Packwright\ExtEmConf\Enum\IssueSeverity;
@@ -181,7 +182,7 @@ final class ExtEmConfNormalizer
     private function normalizeMigratableConstraints(ExtEmConf $extEmConf, array &$droppedItems): Constraints
     {
         $constraints = $extEmConf->constraints;
-        if ($constraints->migratable === []) {
+        if ($constraints->migratable->isEmpty()) {
             return $constraints;
         }
 
@@ -189,21 +190,16 @@ final class ExtEmConfNormalizer
         $conflicts = $constraints->conflicts->all();
         $suggests = $constraints->suggests->all();
 
-        foreach ($constraints->migratable as $typoKey => $collection) {
-            $canonicalKey = ExtEmConfReader::CONSTRAINTS_MIGRATION_MAP[$typoKey] ?? null;
-            if ($canonicalKey === null) {
-                continue;
-            }
+        $groups = [
+            ['typo' => 'depend', 'canonical' => 'depends', 'source' => $constraints->migratable->depend, 'target' => &$depends],
+            ['typo' => 'suggest', 'canonical' => 'suggests', 'source' => $constraints->migratable->suggest, 'target' => &$suggests],
+            ['typo' => 'conflict', 'canonical' => 'conflicts', 'source' => $constraints->migratable->conflict, 'target' => &$conflicts],
+        ];
 
-            foreach ($collection->all() as $candidate) {
-                $existing = match ($canonicalKey) {
-                    'depends' => $depends,
-                    'conflicts' => $conflicts,
-                    'suggests' => $suggests,
-                };
-
+        foreach ($groups as $group) {
+            foreach ($group['source']->all() as $candidate) {
                 $collides = false;
-                foreach ($existing as $entry) {
+                foreach ($group['target'] as $entry) {
                     if ($entry->extensionKey === $candidate->extensionKey) {
                         $collides = true;
                         break;
@@ -212,12 +208,12 @@ final class ExtEmConfNormalizer
 
                 if ($collides) {
                     $droppedItems[] = new Issue(
-                        path: 'constraints.' . $typoKey . '.' . $candidate->extensionKey,
+                        path: 'constraints.' . $group['typo'] . '.' . $candidate->extensionKey,
                         message: sprintf(
                             'Skipped migration of "%s.%s": canonical "%s.%s" already defined.',
-                            $typoKey,
+                            $group['typo'],
                             $candidate->extensionKey,
-                            $canonicalKey,
+                            $group['canonical'],
                             $candidate->extensionKey,
                         ),
                         severity: IssueSeverity::WARNING,
@@ -227,24 +223,18 @@ final class ExtEmConfNormalizer
                 }
 
                 $droppedItems[] = new Issue(
-                    path: 'constraints.' . $canonicalKey . '.' . $candidate->extensionKey,
+                    path: 'constraints.' . $group['canonical'] . '.' . $candidate->extensionKey,
                     message: sprintf(
                         'Migrated "%s.%s" to "%s.%s".',
-                        $typoKey,
+                        $group['typo'],
                         $candidate->extensionKey,
-                        $canonicalKey,
+                        $group['canonical'],
                         $candidate->extensionKey,
                     ),
                     severity: IssueSeverity::WARNING,
                 );
 
-                if ($canonicalKey === 'depends') {
-                    $depends[] = $candidate;
-                } elseif ($canonicalKey === 'conflicts') {
-                    $conflicts[] = $candidate;
-                } else {
-                    $suggests[] = $candidate;
-                }
+                $group['target'][] = $candidate;
             }
         }
 
@@ -252,7 +242,7 @@ final class ExtEmConfNormalizer
             depends: new DependencyCollection($depends),
             conflicts: new DependencyCollection($conflicts),
             suggests: new DependencyCollection($suggests),
-            migratable: [],
+            migratable: new MigratableConstraints(),
         );
     }
 

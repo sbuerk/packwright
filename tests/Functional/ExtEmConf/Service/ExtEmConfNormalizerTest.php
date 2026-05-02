@@ -7,6 +7,7 @@ namespace Packwright\Tests\Functional\ExtEmConf\Service;
 use Packwright\ExtEmConf\Dto\Constraints\Constraints;
 use Packwright\ExtEmConf\Dto\Constraints\Dependency;
 use Packwright\ExtEmConf\Dto\Constraints\DependencyCollection;
+use Packwright\ExtEmConf\Dto\Constraints\MigratableConstraints;
 use Packwright\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
 use Packwright\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
 use Packwright\ExtEmConf\Dto\ExtEmConf;
@@ -363,20 +364,20 @@ final class ExtEmConfNormalizerTest extends TestCase
                 depends: new DependencyCollection([
                     new Dependency('typo3', ConstraintVersionType::ALL, new AllVersions()),
                 ]),
-                migratable: [
-                    'depend' => new DependencyCollection([
+                migratable: new MigratableConstraints(
+                    depend: new DependencyCollection([
                         new Dependency(
                             extensionKey: 'php',
                             versionType: ConstraintVersionType::VERSION,
                             version: new SingleVersion(Version::fromString('8.2.0')),
                         ),
                     ]),
-                ],
+                ),
             ),
         ));
 
         self::assertTrue($result->hasChanges);
-        self::assertSame([], $result->extEmConf->constraints->migratable);
+        self::assertTrue($result->extEmConf->constraints->migratable->isEmpty());
 
         $depends = iterator_to_array($result->extEmConf->constraints->depends);
         self::assertCount(2, $depends);
@@ -403,24 +404,24 @@ final class ExtEmConfNormalizerTest extends TestCase
             category: Category::PLUGIN,
             state: State::STABLE,
             constraints: new Constraints(
-                migratable: [
-                    'depend' => new DependencyCollection([
+                migratable: new MigratableConstraints(
+                    depend: new DependencyCollection([
                         new Dependency('php', ConstraintVersionType::ALL, new AllVersions()),
                     ]),
-                    'suggest' => new DependencyCollection([
+                    suggest: new DependencyCollection([
                         new Dependency('news', ConstraintVersionType::ALL, new AllVersions()),
                     ]),
-                    'conflict' => new DependencyCollection([
+                    conflict: new DependencyCollection([
                         new Dependency('old_ext', ConstraintVersionType::ALL, new AllVersions()),
                     ]),
-                ],
+                ),
             ),
         ));
 
         self::assertCount(1, $result->extEmConf->constraints->depends);
         self::assertCount(1, $result->extEmConf->constraints->suggests);
         self::assertCount(1, $result->extEmConf->constraints->conflicts);
-        self::assertSame([], $result->extEmConf->constraints->migratable);
+        self::assertTrue($result->extEmConf->constraints->migratable->isEmpty());
     }
 
     #[Test]
@@ -440,15 +441,15 @@ final class ExtEmConfNormalizerTest extends TestCase
             state: State::STABLE,
             constraints: new Constraints(
                 depends: new DependencyCollection([$canonicalDep]),
-                migratable: [
-                    'depend' => new DependencyCollection([
+                migratable: new MigratableConstraints(
+                    depend: new DependencyCollection([
                         new Dependency(
                             extensionKey: 'typo3',
                             versionType: ConstraintVersionType::VERSION,
                             version: new SingleVersion(Version::fromString('12.4.0')),
                         ),
                     ]),
-                ],
+                ),
             ),
         ));
 
@@ -504,11 +505,11 @@ final class ExtEmConfNormalizerTest extends TestCase
             category: Category::PLUGIN,
             state: State::STABLE,
             constraints: new Constraints(
-                migratable: [
-                    'depend' => new DependencyCollection([
+                migratable: new MigratableConstraints(
+                    depend: new DependencyCollection([
                         new Dependency('php', ConstraintVersionType::ALL, new AllVersions()),
                     ]),
-                ],
+                ),
             ),
         ));
 

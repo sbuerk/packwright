@@ -197,13 +197,19 @@ final class ExtEmConfValidator
      */
     private function validateMigratableConstraintsKeys(ExtEmConf $extEmConf, array &$issues): void
     {
-        if ($extEmConf->constraints->migratable === []) {
+        $migratable = $extEmConf->constraints->migratable;
+        if ($migratable->isEmpty()) {
             return;
         }
 
-        foreach ($extEmConf->constraints->migratable as $typoKey => $collection) {
-            $canonicalKey = ExtEmConfReader::CONSTRAINTS_MIGRATION_MAP[$typoKey] ?? null;
-            if ($canonicalKey === null) {
+        $groups = [
+            'depend' => ['canonical' => 'depends', 'collection' => $migratable->depend, 'against' => $extEmConf->constraints->depends],
+            'suggest' => ['canonical' => 'suggests', 'collection' => $migratable->suggest, 'against' => $extEmConf->constraints->suggests],
+            'conflict' => ['canonical' => 'conflicts', 'collection' => $migratable->conflict, 'against' => $extEmConf->constraints->conflicts],
+        ];
+
+        foreach ($groups as $typoKey => $group) {
+            if ($group['collection']->isEmpty()) {
                 continue;
             }
 
@@ -212,29 +218,23 @@ final class ExtEmConfValidator
                 message: sprintf(
                     'Unknown constraints key "%s"; `extemconf:normalize` will migrate it to "%s".',
                     $typoKey,
-                    $canonicalKey,
+                    $group['canonical'],
                 ),
                 severity: IssueSeverity::WARNING,
             );
 
-            $canonicalCollection = match ($canonicalKey) {
-                'depends' => $extEmConf->constraints->depends,
-                'conflicts' => $extEmConf->constraints->conflicts,
-                'suggests' => $extEmConf->constraints->suggests,
-            };
-
             $canonicalKeys = [];
-            foreach ($canonicalCollection->all() as $existing) {
+            foreach ($group['against']->all() as $existing) {
                 $canonicalKeys[$existing->extensionKey] = true;
             }
 
-            foreach ($collection->all() as $candidate) {
+            foreach ($group['collection']->all() as $candidate) {
                 if (isset($canonicalKeys[$candidate->extensionKey])) {
                     $issues[] = new Issue(
                         path: 'constraints.' . $typoKey . '.' . $candidate->extensionKey,
                         message: sprintf(
                             'Will be skipped during normalization: canonical "%s.%s" already exists.',
-                            $canonicalKey,
+                            $group['canonical'],
                             $candidate->extensionKey,
                         ),
                         severity: IssueSeverity::WARNING,

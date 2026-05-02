@@ -7,6 +7,7 @@ namespace Packwright\Tests\Functional\ExtEmConf\Service;
 use Packwright\ExtEmConf\Dto\Constraints\Constraints;
 use Packwright\ExtEmConf\Dto\Constraints\Dependency;
 use Packwright\ExtEmConf\Dto\Constraints\DependencyCollection;
+use Packwright\ExtEmConf\Dto\Constraints\MigratableConstraints;
 use Packwright\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
 use Packwright\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
 use Packwright\ExtEmConf\Dto\ExtEmConf;
@@ -305,15 +306,15 @@ final class ExtEmConfValidatorTest extends TestCase
             author: 'John Doe',
             authorEmail: 'john@example.com',
             constraints: new Constraints(
-                migratable: [
-                    'depend' => new DependencyCollection([
+                migratable: new MigratableConstraints(
+                    depend: new DependencyCollection([
                         new Dependency(
                             extensionKey: 'php',
                             versionType: ConstraintVersionType::VERSION,
                             version: new SingleVersion(Version::fromString('8.2.0')),
                         ),
                     ]),
-                ],
+                ),
             ),
         ));
 
@@ -342,17 +343,17 @@ final class ExtEmConfValidatorTest extends TestCase
             author: 'John Doe',
             authorEmail: 'john@example.com',
             constraints: new Constraints(
-                migratable: [
-                    'depend' => new DependencyCollection([
+                migratable: new MigratableConstraints(
+                    depend: new DependencyCollection([
                         new Dependency('php', ConstraintVersionType::ALL, new AllVersions()),
                     ]),
-                    'suggest' => new DependencyCollection([
+                    suggest: new DependencyCollection([
                         new Dependency('news', ConstraintVersionType::ALL, new AllVersions()),
                     ]),
-                    'conflict' => new DependencyCollection([
+                    conflict: new DependencyCollection([
                         new Dependency('old_ext', ConstraintVersionType::ALL, new AllVersions()),
                     ]),
-                ],
+                ),
             ),
         ));
 
@@ -381,15 +382,15 @@ final class ExtEmConfValidatorTest extends TestCase
                         version: new AllVersions(),
                     ),
                 ]),
-                migratable: [
-                    'depend' => new DependencyCollection([
+                migratable: new MigratableConstraints(
+                    depend: new DependencyCollection([
                         new Dependency(
                             extensionKey: 'typo3',
                             versionType: ConstraintVersionType::ALL,
                             version: new AllVersions(),
                         ),
                     ]),
-                ],
+                ),
             ),
         ));
 
@@ -418,11 +419,11 @@ final class ExtEmConfValidatorTest extends TestCase
                 depends: new DependencyCollection([
                     new Dependency('typo3', ConstraintVersionType::ALL, new AllVersions()),
                 ]),
-                migratable: [
-                    'depend' => new DependencyCollection([
+                migratable: new MigratableConstraints(
+                    depend: new DependencyCollection([
                         new Dependency('php', ConstraintVersionType::ALL, new AllVersions()),
                     ]),
-                ],
+                ),
             ),
         ));
 

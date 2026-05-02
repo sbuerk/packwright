@@ -12,6 +12,7 @@ use Packwright\ExtEmConf\Dto\Autoload\Psr4Entry;
 use Packwright\ExtEmConf\Dto\Constraints\Constraints;
 use Packwright\ExtEmConf\Dto\Constraints\Dependency;
 use Packwright\ExtEmConf\Dto\Constraints\DependencyCollection;
+use Packwright\ExtEmConf\Dto\Constraints\MigratableConstraints;
 use Packwright\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
 use Packwright\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
 use Packwright\ExtEmConf\Dto\Constraints\VersionValue\VersionValueInterface;
@@ -261,7 +262,11 @@ final class ExtEmConfReader
             return new Constraints();
         }
 
-        $migratable = [];
+        $migratableGroups = [
+            'depend' => new DependencyCollection(),
+            'suggest' => new DependencyCollection(),
+            'conflict' => new DependencyCollection(),
+        ];
         foreach (self::CONSTRAINTS_MIGRATION_MAP as $typoKey => $canonicalKey) {
             if (!array_key_exists($typoKey, $constraintsRaw)) {
                 continue;
@@ -277,17 +282,18 @@ final class ExtEmConfReader
                 severity: IssueSeverity::WARNING,
             );
 
-            $collection = $this->readDependencyCollection($constraintsRaw, $typoKey, $issues);
-            if (!$collection->isEmpty()) {
-                $migratable[$typoKey] = $collection;
-            }
+            $migratableGroups[$typoKey] = $this->readDependencyCollection($constraintsRaw, $typoKey, $issues);
         }
 
         return new Constraints(
             depends: $this->readDependencyCollection($constraintsRaw, 'depends', $issues),
             conflicts: $this->readDependencyCollection($constraintsRaw, 'conflicts', $issues),
             suggests: $this->readDependencyCollection($constraintsRaw, 'suggests', $issues),
-            migratable: $migratable,
+            migratable: new MigratableConstraints(
+                depend: $migratableGroups['depend'],
+                suggest: $migratableGroups['suggest'],
+                conflict: $migratableGroups['conflict'],
+            ),
         );
     }
 
