@@ -2,29 +2,29 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Service;
+namespace Packwright\ExtEmConf\Service;
 
-use SBReleaser\ExtEmConf\Dto\Autoload;
-use SBReleaser\ExtEmConf\Dto\Autoload\ClassmapCollection;
-use SBReleaser\ExtEmConf\Dto\Autoload\ClassmapEntry;
-use SBReleaser\ExtEmConf\Dto\Autoload\Psr4Collection;
-use SBReleaser\ExtEmConf\Dto\Autoload\Psr4Entry;
-use SBReleaser\ExtEmConf\Dto\Constraints\Constraints;
-use SBReleaser\ExtEmConf\Dto\Constraints\Dependency;
-use SBReleaser\ExtEmConf\Dto\Constraints\DependencyCollection;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\VersionRange;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\VersionValueInterface;
-use SBReleaser\ExtEmConf\Dto\ExtEmConf;
-use SBReleaser\ExtEmConf\Dto\Version;
-use SBReleaser\ExtEmConf\Enum\Category;
-use SBReleaser\ExtEmConf\Enum\ConstraintVersionType;
-use SBReleaser\ExtEmConf\Enum\IssueSeverity;
-use SBReleaser\ExtEmConf\Enum\ResultState;
-use SBReleaser\ExtEmConf\Enum\State;
-use SBReleaser\ExtEmConf\Result\Issue;
-use SBReleaser\ExtEmConf\Result\ReadResult;
+use Packwright\ExtEmConf\Dto\Autoload;
+use Packwright\ExtEmConf\Dto\Autoload\ClassmapCollection;
+use Packwright\ExtEmConf\Dto\Autoload\ClassmapEntry;
+use Packwright\ExtEmConf\Dto\Autoload\Psr4Collection;
+use Packwright\ExtEmConf\Dto\Autoload\Psr4Entry;
+use Packwright\ExtEmConf\Dto\Constraints\Constraints;
+use Packwright\ExtEmConf\Dto\Constraints\Dependency;
+use Packwright\ExtEmConf\Dto\Constraints\DependencyCollection;
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\VersionRange;
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\VersionValueInterface;
+use Packwright\ExtEmConf\Dto\ExtEmConf;
+use Packwright\ExtEmConf\Dto\Version;
+use Packwright\ExtEmConf\Enum\Category;
+use Packwright\ExtEmConf\Enum\ConstraintVersionType;
+use Packwright\ExtEmConf\Enum\IssueSeverity;
+use Packwright\ExtEmConf\Enum\ResultState;
+use Packwright\ExtEmConf\Enum\State;
+use Packwright\ExtEmConf\Result\Issue;
+use Packwright\ExtEmConf\Result\ReadResult;
 
 /**
  * Reads an `ext_emconf.php` file and maps its contents to an

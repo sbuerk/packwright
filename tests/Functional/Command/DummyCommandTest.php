@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\Tests\Functional\Command;
+namespace Packwright\Tests\Functional\Command;
 
+use Packwright\Application;
+use Packwright\Kernel;
 use PHPUnit\Framework\TestCase;
-use SBReleaser\Application;
-use SBReleaser\Kernel;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 

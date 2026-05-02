@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Dto\Constraints;
+namespace Packwright\ExtEmConf\Dto\Constraints;
 
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\VersionValueInterface;
-use SBReleaser\ExtEmConf\Enum\ConstraintVersionType;
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\VersionValueInterface;
+use Packwright\ExtEmConf\Enum\ConstraintVersionType;
 
 /**
  * Represents a single extension key / version-value pair inside a

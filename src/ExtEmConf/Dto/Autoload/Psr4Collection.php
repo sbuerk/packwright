@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Dto\Autoload;
+namespace Packwright\ExtEmConf\Dto\Autoload;
 
 /**
  * An ordered, immutable collection of `Psr4Entry` items.

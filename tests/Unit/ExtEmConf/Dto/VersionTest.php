@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\Tests\Unit\ExtEmConf\Dto;
+namespace Packwright\Tests\Unit\ExtEmConf\Dto;
 
+use Packwright\ExtEmConf\Dto\Version;
+use Packwright\ExtEmConf\Enum\VersionFormat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use SBReleaser\ExtEmConf\Dto\Version;
-use SBReleaser\ExtEmConf\Enum\VersionFormat;
 
 final class VersionTest extends TestCase
 {

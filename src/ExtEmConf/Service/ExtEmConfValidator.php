@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Service;
+namespace Packwright\ExtEmConf\Service;
 
-use SBReleaser\ExtEmConf\Dto\ExtEmConf;
-use SBReleaser\ExtEmConf\Dto\Version;
-use SBReleaser\ExtEmConf\Enum\IssueSeverity;
-use SBReleaser\ExtEmConf\Enum\Typo3Version;
-use SBReleaser\ExtEmConf\Enum\ResultState;
-use SBReleaser\ExtEmConf\Result\Issue;
-use SBReleaser\ExtEmConf\Result\ValidationResult;
+use Packwright\ExtEmConf\Dto\ExtEmConf;
+use Packwright\ExtEmConf\Dto\Version;
+use Packwright\ExtEmConf\Enum\IssueSeverity;
+use Packwright\ExtEmConf\Enum\ResultState;
+use Packwright\ExtEmConf\Enum\Typo3Version;
+use Packwright\ExtEmConf\Result\Issue;
+use Packwright\ExtEmConf\Result\ValidationResult;
 
 /**
  * Validates an `ExtEmConf` DTO and returns a `ValidationResult`.

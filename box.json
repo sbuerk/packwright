@@ -8,7 +8,7 @@
         "config"
     ],
     "files": [
-        "var/cache/SBReleaserContainer.php"
+        "var/cache/PackwrightContainer.php"
     ],
     "finder": [
         {

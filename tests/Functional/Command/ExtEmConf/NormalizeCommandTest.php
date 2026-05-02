@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\Tests\Functional\Command\ExtEmConf;
+namespace Packwright\Tests\Functional\Command\ExtEmConf;
 
+use Packwright\Application;
+use Packwright\Kernel;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use SBReleaser\Application;
-use SBReleaser\Kernel;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 

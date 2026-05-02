@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Dto\Constraints\VersionValue;
+namespace Packwright\ExtEmConf\Dto\Constraints\VersionValue;
 
-use SBReleaser\ExtEmConf\Dto\Version;
-use SBReleaser\ExtEmConf\Enum\VersionFormat;
+use Packwright\ExtEmConf\Dto\Version;
+use Packwright\ExtEmConf\Enum\VersionFormat;
 
 /**
  * Represents an inclusive version range constraint for a dependency.

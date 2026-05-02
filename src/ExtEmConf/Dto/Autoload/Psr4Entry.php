@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Dto\Autoload;
+namespace Packwright\ExtEmConf\Dto\Autoload;
 
 /**
  * A single PSR-4 autoload entry mapping a namespace prefix to a source path.

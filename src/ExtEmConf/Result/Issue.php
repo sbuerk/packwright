@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Result;
+namespace Packwright\ExtEmConf\Result;
 
-use SBReleaser\ExtEmConf\Enum\IssueSeverity;
+use Packwright\ExtEmConf\Enum\IssueSeverity;
 
 /**
  * Represents a single diagnostic issue found during read, validation,

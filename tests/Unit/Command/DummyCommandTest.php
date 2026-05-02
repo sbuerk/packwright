@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\Tests\Unit\Command;
+namespace Packwright\Tests\Unit\Command;
 
+use Packwright\Command\DummyCommand;
 use PHPUnit\Framework\TestCase;
-use SBReleaser\Command\DummyCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 

@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Service;
+namespace Packwright\ExtEmConf\Service;
 
-use SBReleaser\ExtEmConf\Dto\Autoload;
-use SBReleaser\ExtEmConf\Dto\Constraints\Constraints;
-use SBReleaser\ExtEmConf\Dto\Constraints\DependencyCollection;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\VersionValueInterface;
-use SBReleaser\ExtEmConf\Dto\ExtEmConf;
-use SBReleaser\ExtEmConf\Enum\Category;
-use SBReleaser\ExtEmConf\Enum\State;
-use SBReleaser\ExtEmConf\Enum\Typo3Version;
+use Packwright\ExtEmConf\Dto\Autoload;
+use Packwright\ExtEmConf\Dto\Constraints\Constraints;
+use Packwright\ExtEmConf\Dto\Constraints\DependencyCollection;
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\VersionValueInterface;
+use Packwright\ExtEmConf\Dto\ExtEmConf;
+use Packwright\ExtEmConf\Enum\Category;
+use Packwright\ExtEmConf\Enum\State;
+use Packwright\ExtEmConf\Enum\Typo3Version;
 
 /**
  * Generates `ext_emconf.php` file content from an `ExtEmConf` DTO.

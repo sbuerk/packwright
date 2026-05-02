@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\Tests\Unit\ExtEmConf\Constraints;
+namespace Packwright\Tests\Unit\ExtEmConf\Constraints;
 
+use Packwright\ExtEmConf\Dto\Constraints\Dependency;
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\VersionRange;
+use Packwright\ExtEmConf\Dto\Version;
+use Packwright\ExtEmConf\Enum\ConstraintVersionType;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use SBReleaser\ExtEmConf\Dto\Constraints\Dependency;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\VersionRange;
-use SBReleaser\ExtEmConf\Dto\Version;
-use SBReleaser\ExtEmConf\Enum\ConstraintVersionType;
 
 final class DependencyTest extends TestCase
 {

@@ -1,13 +1,13 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Instantiated class SBReleaserContainer not found\.$#'
+			message: '#^Instantiated class PackwrightContainer not found\.$#'
 			identifier: class.notFound
 			count: 1
 			path: src/Kernel.php
 
 		-
-			message: '#^Method SBReleaser\\Kernel\:\:createContainer\(\) should return Symfony\\Component\\DependencyInjection\\ContainerInterface but returns SBReleaserContainer\.$#'
+			message: '#^Method Packwright\\Kernel\:\:createContainer\(\) should return Symfony\\Component\\DependencyInjection\\ContainerInterface but returns PackwrightContainer\.$#'
 			identifier: return.type
 			count: 1
 			path: src/Kernel.php

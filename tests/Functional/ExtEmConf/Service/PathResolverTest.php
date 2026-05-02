@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\Tests\Functional\ExtEmConf\Service;
+namespace Packwright\Tests\Functional\ExtEmConf\Service;
 
+use Packwright\ExtEmConf\Service\PathResolver;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use SBReleaser\ExtEmConf\Service\PathResolver;
 
 final class PathResolverTest extends TestCase
 {

@@ -2,30 +2,30 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\Tests\Functional\ExtEmConf\Service;
+namespace Packwright\Tests\Functional\ExtEmConf\Service;
 
+use Packwright\ExtEmConf\Dto\Autoload;
+use Packwright\ExtEmConf\Dto\Autoload\Psr4Collection;
+use Packwright\ExtEmConf\Dto\Autoload\Psr4Entry;
+use Packwright\ExtEmConf\Dto\Constraints\Constraints;
+use Packwright\ExtEmConf\Dto\Constraints\Dependency;
+use Packwright\ExtEmConf\Dto\Constraints\DependencyCollection;
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\VersionRange;
+use Packwright\ExtEmConf\Dto\ExtEmConf;
+use Packwright\ExtEmConf\Dto\Version;
+use Packwright\ExtEmConf\Enum\Category;
+use Packwright\ExtEmConf\Enum\ConstraintVersionType;
+use Packwright\ExtEmConf\Enum\ResultState;
+use Packwright\ExtEmConf\Enum\State;
+use Packwright\ExtEmConf\Enum\Typo3Version;
+use Packwright\ExtEmConf\Service\ExtEmConfNormalizer;
+use Packwright\ExtEmConf\Service\ExtEmConfReader;
+use Packwright\ExtEmConf\Service\ExtEmConfValidator;
+use Packwright\ExtEmConf\Service\ExtEmConfWriter;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use SBReleaser\ExtEmConf\Dto\Autoload;
-use SBReleaser\ExtEmConf\Dto\Autoload\Psr4Collection;
-use SBReleaser\ExtEmConf\Dto\Autoload\Psr4Entry;
-use SBReleaser\ExtEmConf\Dto\Constraints\Constraints;
-use SBReleaser\ExtEmConf\Dto\Constraints\Dependency;
-use SBReleaser\ExtEmConf\Dto\Constraints\DependencyCollection;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\VersionRange;
-use SBReleaser\ExtEmConf\Dto\ExtEmConf;
-use SBReleaser\ExtEmConf\Dto\Version;
-use SBReleaser\ExtEmConf\Enum\Category;
-use SBReleaser\ExtEmConf\Enum\ConstraintVersionType;
-use SBReleaser\ExtEmConf\Enum\ResultState;
-use SBReleaser\ExtEmConf\Enum\State;
-use SBReleaser\ExtEmConf\Enum\Typo3Version;
-use SBReleaser\ExtEmConf\Service\ExtEmConfNormalizer;
-use SBReleaser\ExtEmConf\Service\ExtEmConfReader;
-use SBReleaser\ExtEmConf\Service\ExtEmConfValidator;
-use SBReleaser\ExtEmConf\Service\ExtEmConfWriter;
 
 final class ExtEmConfWriterTest extends TestCase
 {

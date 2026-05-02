@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Dto\Constraints\VersionValue;
+namespace Packwright\ExtEmConf\Dto\Constraints\VersionValue;
 
 /**
  * Common contract for the three constraint version value types:

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\Tests\Unit\ExtEmConf\Constraints\VersionValue;
+namespace Packwright\Tests\Unit\ExtEmConf\Constraints\VersionValue;
 
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\VersionRange;
+use Packwright\ExtEmConf\Dto\Version;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\VersionRange;
-use SBReleaser\ExtEmConf\Dto\Version;
 
 final class VersionRangeTest extends TestCase
 {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser;
+namespace Packwright;
 
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -11,7 +11,7 @@ use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 
 final class Kernel
 {
-    private const COMPILED_CONTAINER_FILE = '/var/cache/SBReleaserContainer.php';
+    private const COMPILED_CONTAINER_FILE = '/var/cache/PackwrightContainer.php';
 
     public function __construct(
         private readonly string $projectDir,
@@ -21,7 +21,7 @@ final class Kernel
     {
         if (\Phar::running() !== '') {
             require_once $this->projectDir . self::COMPILED_CONTAINER_FILE;
-            return new \SBReleaserContainer();
+            return new \PackwrightContainer();
         }
 
         return $this->buildContainer();

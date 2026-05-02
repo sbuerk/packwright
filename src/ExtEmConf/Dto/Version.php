@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Dto;
+namespace Packwright\ExtEmConf\Dto;
 
 use Composer\Semver\VersionParser;
-use SBReleaser\ExtEmConf\Enum\VersionFormat;
+use Packwright\ExtEmConf\Enum\VersionFormat;
 
 /**
  * Immutable value object representing a semantic version number.

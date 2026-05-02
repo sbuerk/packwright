@@ -19,6 +19,6 @@ return static function (ContainerConfigurator $container, ContainerBuilder $buil
         ->defaults()
             ->autowire()
             ->autoconfigure()
-        ->load('SBReleaser\\', __DIR__ . '/../src/')
+        ->load('Packwright\\', __DIR__ . '/../src/')
             ->exclude([__DIR__ . '/../src/Kernel.php']);
 };

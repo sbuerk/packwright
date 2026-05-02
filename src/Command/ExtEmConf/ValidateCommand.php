@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\Command\ExtEmConf;
+namespace Packwright\Command\ExtEmConf;
 
-use SBReleaser\ExtEmConf\Enum\IssueSeverity;
-use SBReleaser\ExtEmConf\Enum\ResultState;
-use SBReleaser\ExtEmConf\Enum\Typo3Version;
-use SBReleaser\ExtEmConf\Result\Issue;
-use SBReleaser\ExtEmConf\Service\ExtEmConfReader;
-use SBReleaser\ExtEmConf\Service\ExtEmConfValidator;
-use SBReleaser\ExtEmConf\Service\PathResolver;
+use Packwright\ExtEmConf\Enum\IssueSeverity;
+use Packwright\ExtEmConf\Enum\ResultState;
+use Packwright\ExtEmConf\Enum\Typo3Version;
+use Packwright\ExtEmConf\Result\Issue;
+use Packwright\ExtEmConf\Service\ExtEmConfReader;
+use Packwright\ExtEmConf\Service\ExtEmConfValidator;
+use Packwright\ExtEmConf\Service\PathResolver;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;

@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Service;
+namespace Packwright\ExtEmConf\Service;
 
-use SBReleaser\ExtEmConf\Dto\ExtEmConf;
-use SBReleaser\ExtEmConf\Enum\Category;
-use SBReleaser\ExtEmConf\Enum\Typo3Version;
-use SBReleaser\ExtEmConf\Enum\IssueSeverity;
-use SBReleaser\ExtEmConf\Enum\ResultState;
-use SBReleaser\ExtEmConf\Enum\State;
-use SBReleaser\ExtEmConf\Result\Issue;
-use SBReleaser\ExtEmConf\Result\NormalizationResult;
+use Packwright\ExtEmConf\Dto\ExtEmConf;
+use Packwright\ExtEmConf\Enum\Category;
+use Packwright\ExtEmConf\Enum\IssueSeverity;
+use Packwright\ExtEmConf\Enum\ResultState;
+use Packwright\ExtEmConf\Enum\State;
+use Packwright\ExtEmConf\Enum\Typo3Version;
+use Packwright\ExtEmConf\Result\Issue;
+use Packwright\ExtEmConf\Result\NormalizationResult;
 
 /**
  * Produces a new `ExtEmConf` containing only fields that are valid for

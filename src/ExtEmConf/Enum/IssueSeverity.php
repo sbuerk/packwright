@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Enum;
+namespace Packwright\ExtEmConf\Enum;
 
 /**
  * Severity level for a single diagnostic issue produced by a service.

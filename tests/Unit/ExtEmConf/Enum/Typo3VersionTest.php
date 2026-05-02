@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\Tests\Unit\ExtEmConf\Enum;
+namespace Packwright\Tests\Unit\ExtEmConf\Enum;
 
+use Packwright\ExtEmConf\Enum\Typo3Version;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use SBReleaser\ExtEmConf\Enum\Typo3Version;
 
 final class Typo3VersionTest extends TestCase
 {

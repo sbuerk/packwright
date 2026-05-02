@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Service;
+namespace Packwright\ExtEmConf\Service;
 
 /**
  * Resolves a list of user-supplied path tokens into a sorted, deduplicated

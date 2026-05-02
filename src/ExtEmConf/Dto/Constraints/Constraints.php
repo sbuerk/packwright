@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Dto\Constraints;
+namespace Packwright\ExtEmConf\Dto\Constraints;
 
 /**
  * Holds the three constraint groups from the `constraints` key in

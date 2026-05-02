@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Enum;
+namespace Packwright\ExtEmConf\Enum;
 
 /**
  * Represents the allowed values for the `category` field in `ext_emconf.php`.

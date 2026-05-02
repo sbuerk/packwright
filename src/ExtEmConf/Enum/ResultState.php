@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Enum;
+namespace Packwright\ExtEmConf\Enum;
 
 /**
  * Represents the overall outcome state of a service operation.

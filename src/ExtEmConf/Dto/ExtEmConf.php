@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Dto;
+namespace Packwright\ExtEmConf\Dto;
 
-use SBReleaser\ExtEmConf\Dto\Constraints\Constraints;
-use SBReleaser\ExtEmConf\Enum\Category;
-use SBReleaser\ExtEmConf\Enum\State;
+use Packwright\ExtEmConf\Dto\Constraints\Constraints;
+use Packwright\ExtEmConf\Enum\Category;
+use Packwright\ExtEmConf\Enum\State;
 
 /**
  * Root DTO representing a parsed `ext_emconf.php` file.

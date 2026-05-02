@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Enum;
+namespace Packwright\ExtEmConf\Enum;
 
 /**
  * Selects the output format for `Version::format()`.

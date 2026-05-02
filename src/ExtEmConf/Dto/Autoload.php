@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Dto;
+namespace Packwright\ExtEmConf\Dto;
 
-use SBReleaser\ExtEmConf\Dto\Autoload\ClassmapCollection;
-use SBReleaser\ExtEmConf\Dto\Autoload\Psr4Collection;
+use Packwright\ExtEmConf\Dto\Autoload\ClassmapCollection;
+use Packwright\ExtEmConf\Dto\Autoload\Psr4Collection;
 
 /**
  * Holds autoloading configuration from the `autoload` or `autoload-dev`

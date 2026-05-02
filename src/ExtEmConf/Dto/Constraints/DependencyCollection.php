@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Dto\Constraints;
+namespace Packwright\ExtEmConf\Dto\Constraints;
 
 /**
  * An ordered, immutable collection of `Dependency` entries.

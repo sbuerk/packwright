@@ -25,12 +25,12 @@
     },
     "autoload": {
         "psr-4": {
-            "SBReleaser\\": "src/"
+            "Packwright\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "SBReleaser\\Tests\\": "tests/"
+            "Packwright\\Tests\\": "tests/"
         }
     },
     "scripts": {

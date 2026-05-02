@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\Tests\Functional\ExtEmConf\Service;
+namespace Packwright\Tests\Functional\ExtEmConf\Service;
 
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\VersionRange;
+use Packwright\ExtEmConf\Enum\Category;
+use Packwright\ExtEmConf\Enum\ResultState;
+use Packwright\ExtEmConf\Enum\State;
+use Packwright\ExtEmConf\Service\ExtEmConfReader;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
-use SBReleaser\ExtEmConf\Dto\Constraints\VersionValue\VersionRange;
-use SBReleaser\ExtEmConf\Enum\Category;
-use SBReleaser\ExtEmConf\Enum\ResultState;
-use SBReleaser\ExtEmConf\Enum\State;
-use SBReleaser\ExtEmConf\Service\ExtEmConfReader;
 
 final class ExtEmConfReaderTest extends TestCase
 {

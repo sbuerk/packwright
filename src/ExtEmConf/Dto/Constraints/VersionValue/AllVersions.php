@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Dto\Constraints\VersionValue;
+namespace Packwright\ExtEmConf\Dto\Constraints\VersionValue;
 
 /**
  * Represents a dependency version constraint that accepts any version.

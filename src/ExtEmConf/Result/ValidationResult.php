@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Result;
+namespace Packwright\ExtEmConf\Result;
 
-use SBReleaser\ExtEmConf\Enum\ResultState;
+use Packwright\ExtEmConf\Enum\ResultState;
 
 /**
  * The outcome of `ExtEmConfValidator::validate()`.

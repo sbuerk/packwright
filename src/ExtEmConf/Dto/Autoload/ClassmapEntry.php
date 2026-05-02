@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SBReleaser\ExtEmConf\Dto\Autoload;
+namespace Packwright\ExtEmConf\Dto\Autoload;
 
 /**
  * A single classmap autoload entry pointing to a directory or file path.
