@@ -8,6 +8,9 @@ contracts, see [`ext-emconf-architecture.md`](ext-emconf-architecture.md).
 Both commands share the same input semantics and TYPO3 version selector,
 and both can emit a JSON document for piping into other tools.
 
+The examples below all invoke `packwright`; the short alias `pkw` is
+interchangeable on the command line.
+
 ---
 
 ## `extemconf:validate`
