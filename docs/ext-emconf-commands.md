@@ -395,6 +395,95 @@ for files in `skipped` state with no read result.
 
 ---
 
+## `extemconf:constraints:set`
+
+Adds or updates a single entry under `constraints.{depends|suggests|conflicts}`.
+The mutated DTO is always validated through `ExtEmConfValidator` before
+the writer is invoked, and the same write gate as `extemconf:set` applies.
+
+### Usage
+
+```
+packwright extemconf:constraints:set <type> <extension-key> <paths...> \
+    [--constraint=<spec>] [-t <version>] [--strict] [--dry-run] [--json]
+```
+
+### Arguments
+
+- `<type>` — constraint group: `depends`, `suggests`, or `conflicts`.
+- `<extension-key>` — TYPO3 extension key (lowercase letters, digits,
+  and underscores; non-empty).
+- `<paths>` — variadic, same semantics as `extemconf:validate`.
+
+### Options
+
+- `--constraint` — version constraint to write. Defaults to empty string,
+  which means "any version" (`AllVersions`). `*` is also "any version".
+  A single semver `1.2.3` produces `SingleVersion`; the form
+  `X.Y.Z-X.Y.Z` produces `VersionRange`. Anything else exits
+  `Command::INVALID` (exit 2) before any file is touched. The option
+  is named `--constraint` rather than `--version` to avoid colliding
+  with Symfony's application-level `--version` flag.
+- `-t`, `--typo3-version` — drives validation and writer output, same as
+  `extemconf:set`.
+- `--strict` — require post-mutation state `SUCCESS`. Without
+  `--strict`, `WARNING` is also acceptable; only `FAILURE` blocks the write.
+- `--dry-run` — preview only.
+- `--json` — emit a JSON document.
+
+### Cross-key collision check
+
+Before any mutation, the command scans the *other two* sub-keys of
+`constraints` for `<extension-key>`. If found, the file is reported as
+`FAILURE`/`skipped` with a message pointing the operator at
+`extemconf:constraints:unset`. Other files in the same invocation are
+still processed independently.
+
+### Update vs. insert
+
+If the key already exists under `<type>`, its version is replaced
+(no duplicate entry is produced). If the key is new, it is appended.
+A no-op write (existing entry already matches the new value) reports
+`unchanged` and leaves the file untouched.
+
+### Exit codes
+
+- `0` — every file produced `SUCCESS`/`WARNING`, was unchanged, or was
+  a `--dry-run` preview.
+- `1` — at least one file in `FAILURE` (read failure, validation
+  `FAILURE`, or cross-key collision).
+- `2` — usage error (invalid type, invalid extension key, invalid
+  `--constraint`, no files matched, missing literal path, invalid
+  `--typo3-version`).
+
+### JSON shape
+
+```json
+{
+  "command": "extemconf:constraints:set",
+  "type": "depends",
+  "extensionKey": "extb",
+  "version": "1.0.0-2.5.99",
+  "typo3Version": 13,
+  "strict": false,
+  "dryRun": false,
+  "files": [
+    {
+      "path": "/abs/path/ext_emconf.php",
+      "state": "SUCCESS",
+      "action": "written",
+      "issues": [],
+      "generated": "<?php ..."
+    }
+  ],
+  "summary": {
+    "total": 1, "written": 1, "dryRun": 0, "unchanged": 0, "skipped": 0, "failure": 0
+  }
+}
+```
+
+---
+
 ## Examples
 
 ### Validate every fixture under a directory
