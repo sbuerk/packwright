@@ -2,7 +2,7 @@
     "name": "sbuerk/packwright",
     "description": "packwright — a PHP CLI tool for Composer package version handling and release publishing, with optional TYPO3 ext_emconf.php support",
     "type": "project",
-    "license": "MIT",
+    "license": "GPL-2.0-or-later",
     "authors": [
         {
             "name": "Stefan Bürk",
