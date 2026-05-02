@@ -479,6 +479,56 @@ final class ExtEmConfWriterTest extends TestCase
     }
 
     #[Test]
+    public function generateOmitsConstraintsKeyWhenAllSubKeysEmpty(): void
+    {
+        $output = (new ExtEmConfWriter())->generate(new ExtEmConf(
+            title: 'Test',
+            description: 'Test.',
+            version: '1.0.0',
+            constraints: new Constraints(),
+        ));
+
+        self::assertStringNotContainsString("'constraints'", $output);
+    }
+
+    #[Test]
+    public function generateProducesMinimalFileWhenAllOptionalBlocksEmpty(): void
+    {
+        $writer = new ExtEmConfWriter();
+        $output = $writer->generate(new ExtEmConf(
+            title: 'Minimal',
+            description: 'Minimal extension.',
+            version: '1.0.0',
+            constraints: new Constraints(),
+            autoload: new Autoload(),
+            autoloadDev: new Autoload(),
+        ));
+
+        self::assertStringNotContainsString("'constraints'", $output);
+        self::assertStringNotContainsString("'autoload'", $output);
+        self::assertStringNotContainsString("'autoload-dev'", $output);
+        self::assertStringNotContainsString("'depends'", $output);
+        self::assertStringNotContainsString("'suggests'", $output);
+        self::assertStringNotContainsString("'conflicts'", $output);
+        self::assertStringNotContainsString("'psr-4'", $output);
+        self::assertStringNotContainsString("'classmap'", $output);
+
+        $tmpFile = tempnam(sys_get_temp_dir(), 'packwright_min_') . '.php';
+        try {
+            file_put_contents($tmpFile, $output);
+            $result = (new ExtEmConfReader())->read($tmpFile);
+
+            self::assertSame(ResultState::SUCCESS, $result->state);
+            self::assertNotNull($result->extEmConf);
+            self::assertSame('Minimal', $result->extEmConf->title);
+            self::assertTrue($result->extEmConf->constraints->depends->isEmpty());
+            self::assertTrue($result->extEmConf->autoload->psr4->isEmpty());
+        } finally {
+            @unlink($tmpFile);
+        }
+    }
+
+    #[Test]
     public function generateOmitsConstraintsConflictsWhenEmpty(): void
     {
         $output = (new ExtEmConfWriter())->generate(new ExtEmConf(

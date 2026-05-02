@@ -44,7 +44,11 @@ final class ExtEmConfWriter
         $body .= $this->renderField('author', $extEmConf->author);
         $body .= $this->renderField('author_email', $extEmConf->authorEmail);
         $body .= $this->renderField('author_company', $extEmConf->authorCompany);
-        $body .= $this->renderField('constraints', $this->constraintsToArray($extEmConf->constraints));
+
+        $constraintsArray = $this->constraintsToArray($extEmConf->constraints);
+        if ($constraintsArray !== []) {
+            $body .= $this->renderField('constraints', $constraintsArray);
+        }
 
         $autoloadArray = $this->autoloadToArray($extEmConf->autoload);
         if ($autoloadArray !== []) {
