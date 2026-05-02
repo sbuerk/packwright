@@ -301,6 +301,18 @@ When `$targetTypo3Version` is supplied, any field deprecated in that version
 is flagged as `WARNING`. Without a target version only general structural
 rules are applied.
 
+**Mandatory-field rules:**
+- `title`, `description`, `version` — empty string ⇒ `ERROR`. The message
+  hints that `extemconf:normalize` will write an empty string until a
+  value is set.
+- `category` — `null` (missing) or unrecognised raw string ⇒ `WARNING`.
+  The message points the operator at `extemconf:normalize` and the
+  `Category::MISC` (`"misc"`) default.
+- `state` — `null` (missing) or unrecognised raw string ⇒ `ERROR`.
+  `state` is mandatory per TYPO3 documentation; the message points the
+  operator at `extemconf:normalize` and the `State::BETA` (`"beta"`)
+  default.
+
 **Output:** `ValidationResult`
 - `bool isValid()` — true when no ERROR issues are present
 - `ResultState $state`
@@ -317,9 +329,23 @@ Fields not valid for the target version are omitted from the new object.
 Each omitted field is recorded in `$droppedItems` as an `Issue` with
 severity `WARNING`. `$unknownProperties` is always reset to `[]`.
 
+**Mandatory-field defaults:**
+- `category` — when `null` or an unrecognised raw string, the normalized
+  DTO carries `Category::MISC`. Both branches are recorded in
+  `$droppedItems`.
+- `state` — when `null` or an unrecognised raw string, the normalized
+  DTO carries `State::BETA`. Both branches are recorded in
+  `$droppedItems`.
+- `title`, `description`, `version` — empty strings are preserved (the
+  writer always emits them) but each empty value is recorded as a
+  `WARNING` entry in `$droppedItems`. This keeps the validator's
+  mandatory-field error and the normalizer's "wrote a placeholder"
+  notice in sync, and ensures `hasChanges` flips so the file is
+  rewritten with an explicit empty key when the source was missing it.
+
 **Output:** `NormalizationResult`
 - `ExtEmConf $extEmConf` — new, clean instance
-- `bool $hasChanges` — true when anything was dropped
+- `bool $hasChanges` — true when anything was dropped or defaulted
 - `ResultState $state`
 - `list<Issue> $droppedItems`
 

@@ -57,6 +57,21 @@ packwright extemconf:validate <paths...> [-t <version>] [--json] [--fail-on-warn
 - `2` — usage error (no files matched, missing literal path, invalid
   `--typo3-version`).
 
+### Mandatory-field rules
+
+Validate flags the following conditions and tells the operator what
+`extemconf:normalize` would do about them:
+
+- `title`, `description`, `version` — empty values produce an `ERROR`
+  with a hint that `extemconf:normalize` will write an empty string
+  until a real value is set.
+- `category` — missing (`null`) or unrecognised raw string produces a
+  `WARNING`. `extemconf:normalize` substitutes the
+  `Category::MISC` (`"misc"`) default.
+- `state` — missing (`null`) or unrecognised raw string produces an
+  `ERROR`. `extemconf:normalize` substitutes the
+  `State::BETA` (`"beta"`) default.
+
 ### Table layout
 
 ```
@@ -142,6 +157,21 @@ The `Action` column / JSON `action` field is one of:
 
 Writes use `file_put_contents()` with `LOCK_EX`. Files without changes are
 never re-written.
+
+### Mandatory-field defaults
+
+In addition to dropping deprecated fields, the normalizer fills in
+defaults for fields that TYPO3 considers mandatory but the source file
+left empty or unrecognised. Each default is recorded as a `WARNING`
+entry in the JSON `droppedItems` list (and shown under `-v` in the
+table view):
+
+- `category` — `null` or unrecognised raw string ⇒ `"misc"`.
+- `state` — `null` or unrecognised raw string ⇒ `"beta"`.
+- `title`, `description`, `version` — an empty string is preserved
+  (the writer always emits an explicit key) and recorded so the
+  operator knows a placeholder was scaffolded; a real value still has
+  to be set by hand.
 
 ### Exit codes
 
