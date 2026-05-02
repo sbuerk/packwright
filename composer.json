@@ -48,7 +48,9 @@
         "dump-container": "${PHP_BINARY} bin/dump-container",
         "build": [
             "@dump-container",
-            "${PHP_BINARY} vendor/bin/box compile --composer-bin=\"${COMPOSER_BINARY}\""
+            "${PHP_BINARY} vendor/bin/box compile --composer-bin=\"${COMPOSER_BINARY}\"",
+            "cp build/packwright build/pkw",
+            "chmod 0755 build/pkw"
         ]
     },
     "scripts-descriptions": {
@@ -60,7 +62,7 @@
         "test:unit": "Run unit tests only",
         "test:functional": "Run functional (integration) tests only",
         "dump-container": "Compile and dump the DI container to a PHP class for PHAR embedding",
-        "build": "Compile the DI container then build the self-contained PHAR binary (build/packwright)"
+        "build": "Compile the DI container then build the self-contained PHAR binaries (build/packwright and the byte-identical alias build/pkw)"
     },
     "config": {
         "platform": {

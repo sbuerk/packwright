@@ -80,19 +80,26 @@ composer test:functional
 
 ## Build
 
-The build produces a self-contained PHAR binary. Because the DI container
+The build produces self-contained PHAR binaries. Because the DI container
 uses runtime class discovery that is incompatible with PHAR streams, the
 container must be pre-compiled to a PHP class before packaging.
 
-The full build chain runs both steps in sequence:
+The full build chain runs every step in sequence:
 
 ```bash
 composer build
 ```
 
 This will:
-1. Compile the DI container to `var/cache/SBReleaserContainer.php`
-2. Package everything into `build/sb-releaser`
+1. Compile the DI container to `var/cache/PackwrightContainer.php`
+2. Package everything into `build/packwright`
+3. Copy the result to `build/pkw` so the short-alias binary is shipped
+   alongside the full-name binary in a single build step
+
+`build/pkw` is byte-identical to `build/packwright`; both run the same
+`Packwright\Application` and print the same `--help` header. Shipping
+two files (rather than a symlink) keeps the artefacts independent for
+release upload.
 
 To compile the container separately (e.g. for debugging):
 
@@ -100,10 +107,11 @@ To compile the container separately (e.g. for debugging):
 composer dump-container
 ```
 
-The binary can be executed directly:
+Either binary can be executed directly:
 
 ```bash
-php build/sb-releaser <command>
+php build/packwright <command>
+php build/pkw         <command>
 ```
 
 ## Commit Messages
