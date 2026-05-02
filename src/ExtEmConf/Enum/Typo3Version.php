@@ -25,4 +25,9 @@ enum Typo3Version: int
     case V11 = 11;
     case V12 = 12;
     case V13 = 13;
+
+    public function label(): string
+    {
+        return 'TYPO3 v' . $this->value;
+    }
 }
