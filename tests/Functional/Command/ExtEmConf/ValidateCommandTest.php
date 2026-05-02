@@ -136,7 +136,9 @@ final class ValidateCommandTest extends TestCase
             '--json' => true,
         ]);
 
-        $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+        $display = trim($tester->getDisplay());
+        self::assertStringNotContainsString("\n", $display, 'JSON output must be compact (single line)');
+        $payload = json_decode($display, true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
         self::assertSame('extemconf:validate', $payload['command']);
         self::assertSame(13, $payload['typo3Version']);
@@ -218,7 +220,9 @@ final class ValidateCommandTest extends TestCase
             '--json' => true,
         ]);
 
-        $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+        $display = trim($tester->getDisplay());
+        self::assertStringNotContainsString("\n", $display, 'JSON output must be compact (single line)');
+        $payload = json_decode($display, true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
         $expected = realpath($fixture);
         self::assertNotFalse($expected);
@@ -358,7 +362,9 @@ final class ValidateCommandTest extends TestCase
         ]);
 
         self::assertStringNotContainsString('re-run with -v', $tester->getDisplay());
-        $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+        $display = trim($tester->getDisplay());
+        self::assertStringNotContainsString("\n", $display, 'JSON output must be compact (single line)');
+        $payload = json_decode($display, true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
     }
 }

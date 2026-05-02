@@ -236,7 +236,7 @@ final class GetCommand extends Command
             'files' => $files,
         ];
 
-        return (string)json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        return (string)json_encode($payload, JSON_UNESCAPED_SLASHES);
     }
 
     private function extractValue(ExtEmConf $extEmConf, string $field): ?string

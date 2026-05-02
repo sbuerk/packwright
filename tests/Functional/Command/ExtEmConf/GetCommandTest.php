@@ -105,7 +105,9 @@ final class GetCommandTest extends TestCase
         ]);
 
         self::assertSame(Command::SUCCESS, $exitCode);
-        $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+        $display = trim($tester->getDisplay());
+        self::assertStringNotContainsString("\n", $display, 'JSON output must be compact (single line)');
+        $payload = json_decode($display, true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
         self::assertSame('extemconf:get', $payload['command']);
         self::assertCount(1, $payload['files']);
@@ -133,7 +135,9 @@ final class GetCommandTest extends TestCase
         ]);
 
         self::assertSame(Command::SUCCESS, $exitCode);
-        $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+        $display = trim($tester->getDisplay());
+        self::assertStringNotContainsString("\n", $display, 'JSON output must be compact (single line)');
+        $payload = json_decode($display, true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
         self::assertCount(2, $payload['files']);
     }
@@ -172,7 +176,9 @@ final class GetCommandTest extends TestCase
             ]);
 
             self::assertSame(Command::FAILURE, $exitCode);
-            $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+            $display = trim($tester->getDisplay());
+            self::assertStringNotContainsString("\n", $display, 'JSON output must be compact (single line)');
+            $payload = json_decode($display, true, flags: JSON_THROW_ON_ERROR);
             self::assertIsArray($payload);
             self::assertArrayHasKey('error', $payload['files'][0]);
             self::assertArrayNotHasKey('fields', $payload['files'][0]);

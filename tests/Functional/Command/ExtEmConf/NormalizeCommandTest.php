@@ -167,7 +167,9 @@ final class NormalizeCommandTest extends TestCase
             ]);
 
             self::assertSame(Command::SUCCESS, $exitCode);
-            $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+            $display = trim($tester->getDisplay());
+            self::assertStringNotContainsString("\n", $display, 'JSON output must be compact (single line)');
+            $payload = json_decode($display, true, flags: JSON_THROW_ON_ERROR);
             self::assertIsArray($payload);
             self::assertSame('extemconf:normalize', $payload['command']);
             self::assertSame(13, $payload['typo3Version']);
@@ -261,7 +263,9 @@ final class NormalizeCommandTest extends TestCase
                 '--json' => true,
             ]);
 
-            $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+            $display = trim($tester->getDisplay());
+            self::assertStringNotContainsString("\n", $display, 'JSON output must be compact (single line)');
+            $payload = json_decode($display, true, flags: JSON_THROW_ON_ERROR);
             self::assertIsArray($payload);
             $expected = realpath($tempFile);
             self::assertNotFalse($expected);

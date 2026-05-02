@@ -166,7 +166,9 @@ final class UnsetCommandTest extends TestCase
             ]);
 
             self::assertSame(Command::SUCCESS, $exitCode);
-            $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+            $display = trim($tester->getDisplay());
+            self::assertStringNotContainsString("\n", $display, 'JSON output must be compact (single line)');
+            $payload = json_decode($display, true, flags: JSON_THROW_ON_ERROR);
             self::assertIsArray($payload);
             self::assertSame('extemconf:autoload-dev:psr4:unset', $payload['command']);
             self::assertSame('autoload-dev', $payload['target']);

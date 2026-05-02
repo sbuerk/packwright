@@ -374,7 +374,7 @@ final class UnsetCommand extends Command
             'summary' => $summary,
         ];
 
-        return (string)json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        return (string)json_encode($payload, JSON_UNESCAPED_SLASHES);
     }
 
     private function summaryKey(Action $action): string

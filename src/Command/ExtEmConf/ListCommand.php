@@ -240,7 +240,7 @@ final class ListCommand extends Command
             ];
         }
 
-        return (string)json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        return (string)json_encode($payload, JSON_UNESCAPED_SLASHES);
     }
 
     private function stateLabel(ResultState $state): string

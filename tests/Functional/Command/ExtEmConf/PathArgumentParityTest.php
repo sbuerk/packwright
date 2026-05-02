@@ -23,14 +23,18 @@ final class PathArgumentParityTest extends TestCase
 
         $validateTester = new CommandTester($application->find('extemconf:validate'));
         $validateTester->execute(['paths' => [$path], '--json' => true]);
+        $validateDisplay = $validateTester->getDisplay();
+        self::assertStringNotContainsString("\n", trim($validateDisplay), 'JSON output must be compact (single line)');
         /** @var array{files: list<array{path: string}>} $validatePayload */
-        $validatePayload = json_decode($validateTester->getDisplay(), true, flags: JSON_THROW_ON_ERROR);
+        $validatePayload = json_decode($validateDisplay, true, flags: JSON_THROW_ON_ERROR);
         $validatePaths = array_map(static fn(array $f): string => $f['path'], $validatePayload['files']);
 
         $getTester = new CommandTester($application->find('extemconf:get'));
         $getTester->execute(['paths' => [$path], '--json' => true]);
+        $getDisplay = $getTester->getDisplay();
+        self::assertStringNotContainsString("\n", trim($getDisplay), 'JSON output must be compact (single line)');
         /** @var array{files: list<array{path: string}>} $getPayload */
-        $getPayload = json_decode($getTester->getDisplay(), true, flags: JSON_THROW_ON_ERROR);
+        $getPayload = json_decode($getDisplay, true, flags: JSON_THROW_ON_ERROR);
         $getPaths = array_map(static fn(array $f): string => $f['path'], $getPayload['files']);
 
         self::assertSame([realpath($path)], $validatePaths);
@@ -49,14 +53,18 @@ final class PathArgumentParityTest extends TestCase
 
         $validateTester = new CommandTester($application->find('extemconf:validate'));
         $validateTester->execute(['paths' => [$first, $second], '--json' => true]);
+        $validateDisplay = $validateTester->getDisplay();
+        self::assertStringNotContainsString("\n", trim($validateDisplay), 'JSON output must be compact (single line)');
         /** @var array{files: list<array{path: string}>} $validatePayload */
-        $validatePayload = json_decode($validateTester->getDisplay(), true, flags: JSON_THROW_ON_ERROR);
+        $validatePayload = json_decode($validateDisplay, true, flags: JSON_THROW_ON_ERROR);
         $validatePaths = array_map(static fn(array $f): string => $f['path'], $validatePayload['files']);
 
         $getTester = new CommandTester($application->find('extemconf:get'));
         $getTester->execute(['paths' => [$first, $second], '--json' => true]);
+        $getDisplay = $getTester->getDisplay();
+        self::assertStringNotContainsString("\n", trim($getDisplay), 'JSON output must be compact (single line)');
         /** @var array{files: list<array{path: string}>} $getPayload */
-        $getPayload = json_decode($getTester->getDisplay(), true, flags: JSON_THROW_ON_ERROR);
+        $getPayload = json_decode($getDisplay, true, flags: JSON_THROW_ON_ERROR);
         $getPaths = array_map(static fn(array $f): string => $f['path'], $getPayload['files']);
 
         $expected = [realpath($first), realpath($second)];
@@ -76,14 +84,18 @@ final class PathArgumentParityTest extends TestCase
 
         $validateTester = new CommandTester($application->find('extemconf:validate'));
         $validateTester->execute(['paths' => [$pattern], '--json' => true]);
+        $validateDisplay = $validateTester->getDisplay();
+        self::assertStringNotContainsString("\n", trim($validateDisplay), 'JSON output must be compact (single line)');
         /** @var array{files: list<array{path: string}>} $validatePayload */
-        $validatePayload = json_decode($validateTester->getDisplay(), true, flags: JSON_THROW_ON_ERROR);
+        $validatePayload = json_decode($validateDisplay, true, flags: JSON_THROW_ON_ERROR);
         $validatePaths = array_map(static fn(array $f): string => $f['path'], $validatePayload['files']);
 
         $getTester = new CommandTester($application->find('extemconf:get'));
         $getTester->execute(['paths' => [$pattern], '--json' => true]);
+        $getDisplay = $getTester->getDisplay();
+        self::assertStringNotContainsString("\n", trim($getDisplay), 'JSON output must be compact (single line)');
         /** @var array{files: list<array{path: string}>} $getPayload */
-        $getPayload = json_decode($getTester->getDisplay(), true, flags: JSON_THROW_ON_ERROR);
+        $getPayload = json_decode($getDisplay, true, flags: JSON_THROW_ON_ERROR);
         $getPaths = array_map(static fn(array $f): string => $f['path'], $getPayload['files']);
 
         self::assertCount(5, $validatePaths);

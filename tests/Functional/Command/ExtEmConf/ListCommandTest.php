@@ -58,7 +58,9 @@ final class ListCommandTest extends TestCase
 
         $tester->execute(['paths' => [$pattern], '--json' => true]);
 
-        $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+        $display = trim($tester->getDisplay());
+        self::assertStringNotContainsString("\n", $display, 'JSON output must be compact (single line)');
+        $payload = json_decode($display, true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
         self::assertGreaterThanOrEqual(5, count($payload));
         foreach ($payload as $folder => $entry) {
@@ -111,7 +113,9 @@ final class ListCommandTest extends TestCase
 
         $tester->execute(['paths' => [$fixture], '--json' => true]);
 
-        $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+        $display = trim($tester->getDisplay());
+        self::assertStringNotContainsString("\n", $display, 'JSON output must be compact (single line)');
+        $payload = json_decode($display, true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
 
         $resolvedFile = realpath($fixture);
@@ -154,7 +158,9 @@ final class ListCommandTest extends TestCase
             $exitCode = $tester->execute(['paths' => [$tempFile], '--json' => true]);
 
             self::assertSame(Command::SUCCESS, $exitCode);
-            $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+            $display = trim($tester->getDisplay());
+            self::assertStringNotContainsString("\n", $display, 'JSON output must be compact (single line)');
+            $payload = json_decode($display, true, flags: JSON_THROW_ON_ERROR);
             self::assertIsArray($payload);
             self::assertArrayHasKey($dir, $payload);
             $entry = $payload[$dir];
@@ -296,7 +302,9 @@ final class ListCommandTest extends TestCase
 
         $tester->execute(['paths' => [$fixture], '--json' => true]);
 
-        $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+        $display = trim($tester->getDisplay());
+        self::assertStringNotContainsString("\n", $display, 'JSON output must be compact (single line)');
+        $payload = json_decode($display, true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
 
         $resolvedFile = realpath($fixture);
@@ -334,7 +342,9 @@ final class ListCommandTest extends TestCase
 
         $tester->execute(['paths' => [$fixture], '--json' => true]);
 
-        $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+        $display = trim($tester->getDisplay());
+        self::assertStringNotContainsString("\n", $display, 'JSON output must be compact (single line)');
+        $payload = json_decode($display, true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
         $resolvedFile = (string)realpath($fixture);
         $expectedKey = dirname($resolvedFile);
@@ -378,7 +388,9 @@ final class ListCommandTest extends TestCase
 
             $tester->execute(['paths' => [$extEmConf], '--json' => true]);
 
-            $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+            $display = trim($tester->getDisplay());
+            self::assertStringNotContainsString("\n", $display, 'JSON output must be compact (single line)');
+            $payload = json_decode($display, true, flags: JSON_THROW_ON_ERROR);
             self::assertIsArray($payload);
             $entry = $payload[$dir];
             self::assertSame($dir, $entry['path']);
@@ -421,7 +433,9 @@ final class ListCommandTest extends TestCase
             $strictExit = $tester->execute(['paths' => [$extEmConf], '--json' => true, '--strict' => true]);
 
             self::assertSame(Command::SUCCESS, $strictExit);
-            $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+            $display = trim($tester->getDisplay());
+            self::assertStringNotContainsString("\n", $display, 'JSON output must be compact (single line)');
+            $payload = json_decode($display, true, flags: JSON_THROW_ON_ERROR);
             self::assertIsArray($payload);
             $entry = $payload[$dir];
             self::assertSame($dir, $entry['path']);
