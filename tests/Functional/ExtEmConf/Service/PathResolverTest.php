@@ -108,4 +108,60 @@ final class PathResolverTest extends TestCase
 
         self::assertSame([], (new PathResolver())->resolve([$pattern]));
     }
+
+    #[Test]
+    public function resolveRecursiveGlobMatchesAtAnyDepth(): void
+    {
+        $pattern = __DIR__ . '/../Fixtures/Packages/**/ext_emconf.php';
+
+        $resolved = (new PathResolver())->resolve([$pattern]);
+
+        $expected = [
+            realpath(__DIR__ . '/../Fixtures/Packages/one/package-1/ext_emconf.php'),
+            realpath(__DIR__ . '/../Fixtures/Packages/one/package-2/Tests/Fixtures/extensions/test_extension/ext_emconf.php'),
+            realpath(__DIR__ . '/../Fixtures/Packages/one/package-2/ext_emconf.php'),
+            realpath(__DIR__ . '/../Fixtures/Packages/three/package-4/ext_emconf.php'),
+            realpath(__DIR__ . '/../Fixtures/Packages/two/package-2/Tests/Functional/Fixtures/Extensions/test_ext_one/ext_emconf.php'),
+            realpath(__DIR__ . '/../Fixtures/Packages/two/package-2/ext_emconf.php'),
+            realpath(__DIR__ . '/../Fixtures/Packages/two/package-3/ext_emconf.php'),
+        ];
+        self::assertSame($expected, $resolved);
+    }
+
+    #[Test]
+    public function resolveRecursiveGlobMatchesZeroSegments(): void
+    {
+        // `**` between literal segments must also match zero intermediate
+        // path segments — the file directly under `package-1/` counts.
+        $pattern = __DIR__ . '/../Fixtures/Packages/one/package-1/**/ext_emconf.php';
+
+        $resolved = (new PathResolver())->resolve([$pattern]);
+
+        self::assertSame(
+            [realpath(__DIR__ . '/../Fixtures/Packages/one/package-1/ext_emconf.php')],
+            $resolved,
+        );
+    }
+
+    #[Test]
+    public function resolveRecursiveGlobCombinesWithSingleStar(): void
+    {
+        $pattern = __DIR__ . '/../Fixtures/Packages/*/**/ext_emconf.php';
+
+        $resolved = (new PathResolver())->resolve([$pattern]);
+
+        self::assertCount(7, $resolved);
+        foreach ($resolved as $path) {
+            self::assertStringContainsString('/Packages/', $path);
+            self::assertSame('ext_emconf.php', basename($path));
+        }
+    }
+
+    #[Test]
+    public function resolveRecursiveGlobReturnsEmptyForMissingBase(): void
+    {
+        $pattern = __DIR__ . '/../Fixtures/NoSuchRoot/**/ext_emconf.php';
+
+        self::assertSame([], (new PathResolver())->resolve([$pattern]));
+    }
 }
