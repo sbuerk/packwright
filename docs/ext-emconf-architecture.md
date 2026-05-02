@@ -524,6 +524,40 @@ inspects it. This is a documented exception to the rule.
 absolute paths via `realpath()` — those are the canonical form used in
 JSON output and in all internal logic.
 
+### Subcommand surface
+
+The CLI organises mutating operations as nested subcommand trees so
+each command targets one specific section of the file:
+
+```
+extemconf:validate
+extemconf:get
+extemconf:set
+extemconf:normalize
+extemconf:constraints:set
+extemconf:constraints:unset
+extemconf:autoload:psr4:set
+extemconf:autoload:psr4:unset
+extemconf:autoload:classmap:set
+extemconf:autoload:classmap:unset
+extemconf:autoload-dev:psr4:set
+extemconf:autoload-dev:psr4:unset
+extemconf:autoload-dev:classmap:set
+extemconf:autoload-dev:classmap:unset
+```
+
+Every mutating command shares the same write gate, the
+`Action` enum (`written`/`dry-run`/`unchanged`/`skipped`), and the
+shared options `--strict`, `--dry-run`, `--json`,
+`-t/--typo3-version`. The autoload set commands additionally use
+the Symfony `QuestionHelper` to prompt the operator on cross-target
+collision (a namespace/path that already lives in the *other*
+target); non-interactive runs always skip with a `FAILURE` issue.
+See [`ext-emconf-commands.md`](ext-emconf-commands.md) for the
+full per-command contract.
+
+
+
 For human-readable table output, both console commands run paths through
 `Packwright\Console\DisplayPathFormatter`. The formatter is purely
 string-based: it compares the absolute path against the current working

@@ -564,6 +564,153 @@ unset it under `suggests` first and then `set` it under `depends`.
 
 ---
 
+## Autoload subcommands
+
+Eight dedicated commands manage the `autoload` and `autoload-dev`
+blocks. They mirror the `constraints:*` pattern: per-target
+sub-namespaces (`autoload:*`, `autoload-dev:*`) and per-type
+sub-namespaces (`psr4:*`, `classmap:*`).
+
+| Command                                   | Purpose                                                      |
+|-------------------------------------------|--------------------------------------------------------------|
+| `extemconf:autoload:psr4:set`             | Add or update a PSR-4 namespace mapping under `autoload`.    |
+| `extemconf:autoload:psr4:unset`           | Remove a PSR-4 namespace mapping under `autoload`.           |
+| `extemconf:autoload:classmap:set`         | Append a classmap path under `autoload`.                     |
+| `extemconf:autoload:classmap:unset`       | Remove a classmap path under `autoload`.                     |
+| `extemconf:autoload-dev:psr4:set`         | Add or update a PSR-4 namespace mapping under `autoload-dev`.|
+| `extemconf:autoload-dev:psr4:unset`       | Remove a PSR-4 namespace mapping under `autoload-dev`.       |
+| `extemconf:autoload-dev:classmap:set`     | Append a classmap path under `autoload-dev`.                 |
+| `extemconf:autoload-dev:classmap:unset`   | Remove a classmap path under `autoload-dev`.                 |
+
+Every command:
+
+- Reads each input file via `ExtEmConfReader`, applies the change in
+  memory, runs `ExtEmConfValidator`, and writes back through
+  `ExtEmConfWriter`. The same write gate as `extemconf:set` applies
+  (`FAILURE` blocks; `--strict` additionally blocks `WARNING`).
+- Accepts the shared options `--strict`, `--dry-run`, `--json`,
+  `-t/--typo3-version`. Behavior matches `extemconf:constraints:*`.
+- Reports per-file outcome via the shared `Action` vocabulary
+  (`written`, `dry-run`, `unchanged`, `skipped`).
+
+### `psr4:set` usage
+
+```
+packwright extemconf:autoload:psr4:set     <namespace> <path> <paths...> [options]
+packwright extemconf:autoload-dev:psr4:set <namespace> <path> <paths...> [options]
+```
+
+- `<namespace>` — PSR-4 namespace prefix; must end with `\`. Example:
+  `Vendor\\Ext\\` (shell-quote to keep the trailing backslash).
+- `<path>` — directory the namespace prefix maps to (relative to the
+  extension root), e.g. `Classes/`. Empty paths exit
+  `Command::INVALID`.
+
+If the same namespace already exists under the target, its path is
+**updated**. If the resulting file is byte-identical to the source,
+the action reports `unchanged`.
+
+### `psr4:unset` usage
+
+```
+packwright extemconf:autoload:psr4:unset     <namespace> <paths...> [options]
+packwright extemconf:autoload-dev:psr4:unset <namespace> <paths...> [options]
+```
+
+Removes the named PSR-4 entry from the chosen target. If the
+namespace is absent, the file is reported as `unchanged` and left
+untouched.
+
+### `classmap:set` usage
+
+```
+packwright extemconf:autoload:classmap:set     <path> <paths...> [options]
+packwright extemconf:autoload-dev:classmap:set <path> <paths...> [options]
+```
+
+The classmap path is the entry's identifier — appending the same
+path twice is a no-op (`unchanged`). Empty paths exit
+`Command::INVALID`.
+
+### `classmap:unset` usage
+
+```
+packwright extemconf:autoload:classmap:unset     <path> <paths...> [options]
+packwright extemconf:autoload-dev:classmap:unset <path> <paths...> [options]
+```
+
+Removes the named classmap path from the chosen target. Idempotent.
+
+### Cross-target collision (set commands only)
+
+When the namespace (psr4) or path (classmap) is already present in
+the *other* target — `autoload-dev` while running an `autoload:*`
+command, or `autoload` while running an `autoload-dev:*` command —
+the command stops to ask the operator:
+
+```
+Namespace 'Vendor\Ext\' already exists in `autoload-dev` (path 'Tests/Helper/').
+Move it to `autoload` with path 'Classes/'? [y/N]
+```
+
+- **`y`** → the entry is removed from the source target and the new
+  value is written into the chosen target. Action: `written`.
+- **`n`** (or empty / `N`) → no file change. Action: `skipped`,
+  state: `FAILURE`, with a `path: autoload-dev.psr-4.<namespace>`
+  issue (and the symmetric path for the dev → prod direction).
+
+In **non-interactive mode** — `--no-interaction` set, no TTY, or
+`--json` set (which forces non-interactive) — the prompt is skipped
+and the file is reported as `FAILURE`/`skipped` with the same
+collision issue. This keeps automated pipelines safe from
+unattended moves.
+
+`--strict` does **not** alter collision handling; collisions are
+always errors regardless of the strict gate.
+
+### Exit codes
+
+- `0` — every file produced `SUCCESS`/`WARNING`, was `unchanged`,
+  or was a `--dry-run` preview.
+- `1` — at least one file in `FAILURE` (read failure, validation
+  `FAILURE`, declined or non-interactive cross-target collision).
+- `2` — usage error (invalid namespace, empty path, no files
+  matched, missing literal path, invalid `--typo3-version`).
+
+### JSON shape (set commands)
+
+```json
+{
+  "command": "extemconf:autoload:psr4:set",
+  "target": "autoload",
+  "namespace": "Vendor\\Ext\\",
+  "path": "Classes/",
+  "typo3Version": 13,
+  "strict": false,
+  "dryRun": false,
+  "files": [
+    {
+      "path": "/abs/path/ext_emconf.php",
+      "state": "SUCCESS",
+      "action": "written",
+      "issues": [],
+      "generated": "<?php ..."
+    }
+  ],
+  "summary": {
+    "total": 1, "written": 1, "dryRun": 0, "unchanged": 0, "skipped": 0, "failure": 0
+  }
+}
+```
+
+`classmap:*` commands replace `"namespace"`/`"path"` with a single
+`"classmapPath"` field; the `"target"` field is `"autoload"` or
+`"autoload-dev"` depending on the command tree. Unset commands
+drop the value-side field (`path`, `classmapPath`-as-value) since
+the identifier alone uniquely names the entry to remove.
+
+---
+
 ## Examples
 
 ### Validate every fixture under a directory
@@ -596,6 +743,43 @@ packwright extemconf:normalize packages/my_ext/ext_emconf.php -t 12
 packwright extemconf:normalize packages/my_ext/ext_emconf.php -t 13 --dry-run --json \
   | jq -r '.files[0].generated' \
   | tee /tmp/normalized.php
+```
+
+### Add a PSR-4 mapping under `autoload`
+
+```
+packwright extemconf:autoload:psr4:set "Vendor\\Ext\\" Classes/ \
+    packages/my_ext/ext_emconf.php
+```
+
+### Move a namespace from `autoload-dev` to `autoload` (non-interactive fails)
+
+```
+# Refuses with a FAILURE/skipped issue; pipeline-safe.
+packwright extemconf:autoload:psr4:set "Vendor\\Ext\\Tests\\" Classes/Tests/ \
+    --no-interaction packages/my_ext/ext_emconf.php
+```
+
+### Move it interactively (operator is asked to confirm)
+
+```
+packwright extemconf:autoload:psr4:set "Vendor\\Ext\\Tests\\" Classes/Tests/ \
+    packages/my_ext/ext_emconf.php
+# → prompt: Move it to `autoload` with path 'Classes/Tests/'? [y/N]
+```
+
+### Append a classmap path under `autoload-dev`
+
+```
+packwright extemconf:autoload-dev:classmap:set Tests/Fixtures/Stub/ \
+    packages/my_ext/ext_emconf.php
+```
+
+### Remove a PSR-4 mapping from `autoload-dev`
+
+```
+packwright extemconf:autoload-dev:psr4:unset "Vendor\\Ext\\Tests\\" \
+    packages/my_ext/ext_emconf.php
 ```
 
 ---
