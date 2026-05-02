@@ -17,9 +17,10 @@ interchangeable on the command line.
 
 Resolves a path / glob argument to a set of `ext_emconf.php` files and
 emits an inventory either as a human-readable table or as a JSON
-document keyed by absolute file path. Each file is read and validated;
-the result is reported alongside the discovered path so the command
-doubles as a quick triage tool for nested package trees.
+document keyed by the absolute folder containing each
+`ext_emconf.php`. Each file is read and validated; the result is
+reported alongside the discovered path so the command doubles as a
+quick triage tool for nested package trees.
 
 Unlike `extemconf:validate`, files that fail to parse are listed as
 rows with state `FAILURE` rather than aborting the run, and the exit
@@ -43,9 +44,9 @@ packwright extemconf:list <paths...> [-t <version>] [--json] [--strict]
   Allowed values: `8`, `9`, `10`, `11`, `12`, `13`. Drives the
   per-file validation state in the listing; when omitted only general
   structural rules apply.
-- `--json` — emit a JSON document keyed by absolute file path
-  instead of a table. Always a JSON object (`{}` when nothing
-  matched), suitable for piping into `jq`.
+- `--json` — emit a JSON document keyed by the absolute folder
+  containing each `ext_emconf.php` instead of a table. Always a JSON
+  object (`{}` when nothing matched), suitable for piping into `jq`.
 - `--strict` — exit with code `1` when any listed file ends in
   `WARNING` or `FAILURE` state. Without this flag, the listing is
   always exit `0` (provided the input arguments themselves are valid).
@@ -64,8 +65,10 @@ Default (one row per file):
 ```
 
 Paths beneath the current working directory render relative (with a
-leading `./`); paths elsewhere render absolute. JSON output always
-emits absolute paths as object keys.
+leading `./`); paths elsewhere render absolute. JSON output keys are
+always the absolute folder paths containing each `ext_emconf.php`,
+with the absolute file paths themselves exposed inside each entry
+(see "JSON shape" below).
 
 ### Sibling `composer.json`
 
@@ -93,13 +96,17 @@ fails to parse, so a broken `ext_emconf.php` next to a healthy
 
 ### JSON shape
 
-The top-level value is an object whose keys are absolute file paths
-and whose values carry the parsed ext_emconf data plus a validation
-block:
+The top-level value is an object whose keys are the absolute folder
+paths containing each `ext_emconf.php`. Each entry exposes the
+absolute file paths explicitly via `file` and `composerFile`,
+followed by the parsed `ext_emconf` data, the extracted composer
+metadata, and a validation block:
 
 ```json
 {
-  "/abs/path/my_ext/ext_emconf.php": {
+  "/abs/path/my_ext": {
+    "file": "/abs/path/my_ext/ext_emconf.php",
+    "composerFile": "/abs/path/my_ext/composer.json",
     "data": {
       "title": "My Extension",
       "description": "...",
@@ -134,13 +141,15 @@ block:
       "issues": []
     }
   },
-  "/abs/path/broken/ext_emconf.php": {
+  "/abs/path/broken": {
+    "file": "/abs/path/broken/ext_emconf.php",
+    "composerFile": "",
     "data": null,
     "composer": {
-      "extensionKey": "broken",
-      "packageName": "vendor/broken",
-      "packageType": "typo3-cms-extension",
-      "packageDescription": "..."
+      "extensionKey": "",
+      "packageName": "",
+      "packageType": "",
+      "packageDescription": ""
     },
     "validation": {
       "state": "FAILURE",
@@ -153,26 +162,34 @@ block:
 }
 ```
 
+`file` is the absolute path to the discovered `ext_emconf.php`, or
+the empty string if the file does not exist (or vanished between
+discovery and read). `composerFile` is the absolute path to the
+sibling `composer.json` in the same folder, or the empty string when
+no readable file exists at that location.
+
 `data` is `null` for files that failed to read; `isValid` is `false`
 exactly when `state` is `FAILURE` (warnings still count as valid).
 `composer` always carries the four string fields (empty strings when
 there is no readable sibling `composer.json` or when individual keys
 are missing).
 
-The keyed-by-path shape is designed for `jq` iteration. Examples:
+The keyed-by-folder shape is designed for `jq` iteration. Use
+`.value.file` to recover the `ext_emconf.php` path inside each
+entry. Examples:
 
 ```sh
 # List every file that failed to parse:
 pkw extemconf:list 'packages/**/ext_emconf.php' --json \
-  | jq -r 'to_entries[] | select(.value.validation.state == "FAILURE") | .key'
+  | jq -r 'to_entries[] | select(.value.validation.state == "FAILURE") | .value.file'
 
 # Print "<path>: <title> <version>" for each file:
 pkw extemconf:list 'packages/**/ext_emconf.php' --json \
-  | jq -r 'to_entries[] | "\(.key): \(.value.data.title // "-") \(.value.data.version // "-")"'
+  | jq -r 'to_entries[] | "\(.value.file): \(.value.data.title // "-") \(.value.data.version // "-")"'
 
 # Print "<path>: <extensionKey>[<packageName>] - <packageType>" for each file:
 pkw extemconf:list 'packages/**/ext_emconf.php' --json \
-  | jq -r 'to_entries[] | "\(.key): \(.value.composer.extensionKey)[\(.value.composer.packageName)] - \(.value.composer.packageType)"'
+  | jq -r 'to_entries[] | "\(.value.file): \(.value.composer.extensionKey)[\(.value.composer.packageName)] - \(.value.composer.packageType)"'
 ```
 
 ### Exit codes
