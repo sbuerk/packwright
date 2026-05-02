@@ -35,9 +35,25 @@ family.
 
 ## Status
 
-Early development. The `ext_emconf.php` validate and normalize
-commands are functional today; the broader Composer release workflow
-is on the roadmap.
+Early development. The following `ext_emconf.php` commands are
+functional today; the broader Composer release workflow is on the
+roadmap.
+
+- `extemconf:validate` — validate one or more `ext_emconf.php` files.
+- `extemconf:normalize` — normalize and rewrite files (drops
+  deprecated keys, fills mandatory defaults).
+- `extemconf:get` — read selected scalar fields (table or JSON).
+- `extemconf:set` — set one or more scalar fields with up-front
+  validation.
+- `extemconf:constraints:set` — add or update an entry under
+  `constraints.{depends|suggests|conflicts}` with cross-key collision
+  detection.
+- `extemconf:constraints:unset` — remove an entry from
+  `constraints.{depends|suggests|conflicts}` (idempotent).
+
+See [`docs/ext-emconf-commands.md`](docs/ext-emconf-commands.md) for
+the full command reference, including JSON output shapes and exit
+code semantics.
 
 ## Requirements
 
@@ -77,15 +93,22 @@ packwright list
 pkw list
 ```
 
-Validate or normalize a TYPO3 extension's `ext_emconf.php`:
+Validate, normalize, inspect, or edit a TYPO3 extension's
+`ext_emconf.php`:
 
 ```bash
 packwright extemconf:validate path/to/ext_emconf.php
 packwright extemconf:normalize path/to/ext_emconf.php
+packwright extemconf:get path/to/ext_emconf.php --field=version
+packwright extemconf:set path/to/ext_emconf.php --ext-version=2.0.0 --state=stable
+packwright extemconf:constraints:set depends typo3 path/to/ext_emconf.php \
+    --constraint='13.4.0-13.4.99'
+packwright extemconf:constraints:unset depends php path/to/ext_emconf.php
 ```
 
 Use `--fail-on-warning` with `extemconf:validate` to also fail on
-`WARNING`-state files (useful in CI).
+`WARNING`-state files (useful in CI). All mutating commands accept
+`--dry-run` and `--json`.
 
 ## Contributing
 

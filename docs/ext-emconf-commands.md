@@ -484,6 +484,65 @@ A no-op write (existing entry already matches the new value) reports
 
 ---
 
+## `extemconf:constraints:unset`
+
+Removes a single entry from `constraints.{depends|suggests|conflicts}`.
+The mutated DTO is validated through `ExtEmConfValidator` before the
+writer is invoked. The same write gate as `extemconf:set` applies.
+
+### Usage
+
+```
+packwright extemconf:constraints:unset <type> <extension-key> <paths...> \
+    [-t <version>] [--strict] [--dry-run] [--json]
+```
+
+### Arguments
+
+Same shape as `extemconf:constraints:set`, minus `--constraint`.
+
+### Idempotent
+
+If the extension key is not present under `<type>`, the file is reported
+as `unchanged` (no error, no write). The command does **not** look in
+the other two sub-keys — to move a key from `suggests` to `depends`,
+unset it under `suggests` first and then `set` it under `depends`.
+
+### Exit codes
+
+- `0` — every file produced `SUCCESS`/`WARNING`, was unchanged, or was
+  a `--dry-run` preview.
+- `1` — at least one file in `FAILURE` state (read or validation).
+- `2` — usage error (invalid type, invalid extension key, no files
+  matched, missing literal path, invalid `--typo3-version`).
+
+### JSON shape
+
+```json
+{
+  "command": "extemconf:constraints:unset",
+  "type": "depends",
+  "extensionKey": "extb",
+  "typo3Version": 13,
+  "strict": false,
+  "dryRun": false,
+  "files": [
+    {
+      "path": "/abs/path/ext_emconf.php",
+      "state": "SUCCESS",
+      "action": "written",
+      "issues": [],
+      "generated": "<?php ..."
+    }
+  ],
+  "summary": {
+    "total": 1, "written": 1, "dryRun": 0, "unchanged": 0, "skipped": 0, "failure": 0
+  }
+}
+```
+
+---
+
 ## Examples
 
 ### Validate every fixture under a directory
