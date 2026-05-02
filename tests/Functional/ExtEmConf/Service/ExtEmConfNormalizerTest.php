@@ -90,7 +90,7 @@ final class ExtEmConfNormalizerTest extends TestCase
     }
 
     #[Test]
-    public function normalizeDropsRawStringState(): void
+    public function normalizeReplacesRawStringStateWithBeta(): void
     {
         $result = (new ExtEmConfNormalizer())->normalize(new ExtEmConf(
             title: 'My Extension',
@@ -101,10 +101,37 @@ final class ExtEmConfNormalizerTest extends TestCase
         ));
 
         self::assertTrue($result->hasChanges);
-        self::assertNull($result->extEmConf->state);
+        self::assertSame(State::BETA, $result->extEmConf->state);
 
-        $paths = array_map(static fn($i) => $i->path, $result->droppedItems);
-        self::assertContains('state', $paths);
+        $stateIssues = array_values(array_filter(
+            $result->droppedItems,
+            static fn($i) => $i->path === 'state',
+        ));
+        self::assertCount(1, $stateIssues);
+        self::assertStringContainsString('totally_unknown', $stateIssues[0]->message);
+        self::assertStringContainsString('beta', $stateIssues[0]->message);
+    }
+
+    #[Test]
+    public function normalizeMissingStateDefaultsToBeta(): void
+    {
+        $result = (new ExtEmConfNormalizer())->normalize(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+        ));
+
+        self::assertTrue($result->hasChanges);
+        self::assertSame(State::BETA, $result->extEmConf->state);
+
+        $stateIssues = array_values(array_filter(
+            $result->droppedItems,
+            static fn($i) => $i->path === 'state',
+        ));
+        self::assertCount(1, $stateIssues);
+        self::assertStringContainsString('missing', $stateIssues[0]->message);
+        self::assertStringContainsString('beta', $stateIssues[0]->message);
     }
 
     #[Test]

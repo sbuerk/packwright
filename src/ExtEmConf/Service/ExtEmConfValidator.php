@@ -152,15 +152,26 @@ final class ExtEmConfValidator
      */
     private function validateState(ExtEmConf $extEmConf, array &$issues): void
     {
-        if (!is_string($extEmConf->state)) {
+        if ($extEmConf->state === null) {
+            $issues[] = new Issue(
+                path: 'state',
+                message: 'Field "state" is required and missing; `extemconf:normalize` would write the default "beta".',
+                severity: IssueSeverity::ERROR,
+            );
+
             return;
         }
 
-        $issues[] = new Issue(
-            path: 'state',
-            message: sprintf('Unrecognised state value "%s".', $extEmConf->state),
-            severity: IssueSeverity::WARNING,
-        );
+        if (is_string($extEmConf->state)) {
+            $issues[] = new Issue(
+                path: 'state',
+                message: sprintf(
+                    'Unrecognised state value "%s"; `extemconf:normalize` would replace it with the default "beta".',
+                    $extEmConf->state,
+                ),
+                severity: IssueSeverity::ERROR,
+            );
+        }
     }
 
     /**

@@ -111,19 +111,36 @@ final class ExtEmConfNormalizer
     /**
      * @param list<Issue> $droppedItems
      */
-    private function normalizeState(ExtEmConf $extEmConf, array &$droppedItems): ?State
+    private function normalizeState(ExtEmConf $extEmConf, array &$droppedItems): State
     {
-        if (!is_string($extEmConf->state)) {
+        if ($extEmConf->state instanceof State) {
             return $extEmConf->state;
+        }
+
+        if (is_string($extEmConf->state)) {
+            $droppedItems[] = new Issue(
+                path: 'state',
+                message: sprintf(
+                    'Replaced unrecognised state value "%s" with default "%s".',
+                    $extEmConf->state,
+                    State::BETA->value,
+                ),
+                severity: IssueSeverity::WARNING,
+            );
+
+            return State::BETA;
         }
 
         $droppedItems[] = new Issue(
             path: 'state',
-            message: sprintf('Dropped unrecognised state value "%s".', $extEmConf->state),
+            message: sprintf(
+                'Field "state" was missing; wrote default "%s".',
+                State::BETA->value,
+            ),
             severity: IssueSeverity::WARNING,
         );
 
-        return null;
+        return State::BETA;
     }
 
     /**

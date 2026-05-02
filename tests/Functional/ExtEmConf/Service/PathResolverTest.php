@@ -31,8 +31,8 @@ final class PathResolverTest extends TestCase
         foreach ($resolved as $path) {
             self::assertSame('ext_emconf.php', basename($path));
         }
-        // All seven fixture directories ship one ext_emconf.php each.
-        self::assertCount(7, $resolved);
+        // All eight fixture directories ship one ext_emconf.php each.
+        self::assertCount(8, $resolved);
     }
 
     #[Test]
@@ -42,7 +42,7 @@ final class PathResolverTest extends TestCase
 
         $resolved = (new PathResolver())->resolve([$pattern]);
 
-        self::assertCount(7, $resolved);
+        self::assertCount(8, $resolved);
         foreach ($resolved as $path) {
             self::assertSame('ext_emconf.php', basename($path));
         }

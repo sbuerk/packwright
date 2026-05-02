@@ -102,7 +102,7 @@ final class ExtEmConfReaderTest extends TestCase
     #[Test]
     public function readFileWithUnrecognisedStateValuePreservesRawString(): void
     {
-        $result = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/invalid_keys/ext_emconf.php');
+        $result = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/invalid_state/ext_emconf.php');
 
         self::assertNotNull($result->extEmConf);
         self::assertSame('totally_made_up_state', $result->extEmConf->state);

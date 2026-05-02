@@ -176,7 +176,7 @@ final class ExtEmConfValidatorTest extends TestCase
     }
 
     #[Test]
-    public function validateRawStringStateReturnsWarning(): void
+    public function validateRawStringStateReturnsFailure(): void
     {
         $result = (new ExtEmConfValidator())->validate(new ExtEmConf(
             title: 'My Extension',
@@ -188,9 +188,38 @@ final class ExtEmConfValidatorTest extends TestCase
             authorEmail: 'john@example.com',
         ));
 
-        self::assertSame(ResultState::WARNING, $result->state);
-        $warnPaths = array_map(static fn($i) => $i->path, $result->issues);
-        self::assertContains('state', $warnPaths);
+        self::assertSame(ResultState::FAILURE, $result->state);
+        $stateIssues = array_values(array_filter(
+            $result->issues,
+            static fn($i) => $i->path === 'state',
+        ));
+        self::assertCount(1, $stateIssues);
+        self::assertSame(IssueSeverity::ERROR, $stateIssues[0]->severity);
+        self::assertStringContainsString('totally_made_up', $stateIssues[0]->message);
+        self::assertStringContainsString('beta', $stateIssues[0]->message);
+    }
+
+    #[Test]
+    public function validateMissingStateReturnsFailure(): void
+    {
+        $result = (new ExtEmConfValidator())->validate(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            author: 'John Doe',
+            authorEmail: 'john@example.com',
+        ));
+
+        self::assertSame(ResultState::FAILURE, $result->state);
+        $stateIssues = array_values(array_filter(
+            $result->issues,
+            static fn($i) => $i->path === 'state',
+        ));
+        self::assertCount(1, $stateIssues);
+        self::assertSame(IssueSeverity::ERROR, $stateIssues[0]->severity);
+        self::assertStringContainsString('missing', $stateIssues[0]->message);
+        self::assertStringContainsString('beta', $stateIssues[0]->message);
     }
 
     #[Test]

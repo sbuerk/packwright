@@ -5,6 +5,7 @@ $EM_CONF[$_EXTKEY] = [
     'description' => 'The minimal valid ext_emconf.php with only required fields.',
     'version' => '0.1.0',
     'category' => 'misc',
+    'state' => 'beta',
     'constraints' => [
         'depends' => [
             'typo3' => '12.4.0-13.4.99',
