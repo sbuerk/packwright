@@ -46,9 +46,10 @@ Packwright\ExtEmConf\
       ClassmapEntry            Single classmap path entry
       ClassmapCollection       Ordered collection of ClassmapEntry (Countable, IteratorAggregate)
     Constraints\
-      Constraints              Wraps the three dependency collections + a `migratable` map for typo'd sub-keys
-      DependencyCollection     Ordered list of Dependency items
+      Constraints              Wraps the three dependency collections plus a MigratableConstraints DTO
+      DependencyCollection     Ordered collection of Dependency items (Countable, IteratorAggregate, has/get by extensionKey)
       Dependency               Extension key + ConstraintVersionType + VersionValueInterface
+      MigratableConstraints    Mirrors Constraints with three named DependencyCollection groups (depend / suggest / conflict)
       VersionValue\
         VersionValueInterface  Common interface: toVersionString(): string
         AllVersions            Represents '' or '*' (any version)
@@ -64,9 +65,13 @@ Packwright\ExtEmConf\
     IssueSeverity              Pure enum: WARNING | ERROR
   Result\
     Issue                      Single diagnostic item (path + message + severity)
+    IssueCollection            Ordered collection of Issue items (Countable, IteratorAggregate, all/paths/withSeverity/...)
     ReadResult                 Outcome of ExtEmConfReader::read()
     ValidationResult           Outcome of ExtEmConfValidator::validate()
     NormalizationResult        Outcome of ExtEmConfNormalizer::normalize()
+  Dto\Unknown\
+    UnknownProperty            Single key/value pair for keys not in KNOWN_KEYS; value is mixed by design
+    UnknownPropertyCollection  Keyed collection of UnknownProperty (Countable, IteratorAggregate, all/has/get/keys)
   Service\
     ExtEmConfReader            Reads an ext_emconf.php file → ReadResult
     ExtEmConfValidator         Validates an ExtEmConf DTO → ValidationResult
@@ -162,14 +167,16 @@ drops raw strings that cannot be resolved to an enum case.
 `ExtEmConf` carries:
 
 ```php
-/** @var array<string, mixed> */
-public array $unknownProperties = [],
+public UnknownPropertyCollection $unknownProperties = new UnknownPropertyCollection(),
 ```
 
-The reader places every unrecognised key here. The validator flags each
-entry as `WARNING`. The normalizer and writer silently ignore
-`$unknownProperties`. Tests assert that nothing in `$unknownProperties` ever
-appears in writer output.
+The collection holds `UnknownProperty(string $key, mixed $value)` entries —
+the value stays `mixed` because raw `ext_emconf.php` input is genuinely
+arbitrary (strings, scalars, nested arrays). The reader builds one entry per
+unrecognised key; the validator flags each via `unknownProperties->keys()`;
+the normalizer replaces the collection with an empty one and the writer
+silently ignores it. Tests assert via `unknownProperties->has($key)` that
+nothing ever appears in writer output.
 
 ### Deprecated fields
 
@@ -288,7 +295,7 @@ a `FAILURE` result with no DTO and a single `ERROR` issue.
 **Output:** `ReadResult`
 - `ExtEmConf|null $extEmConf` — null on FAILURE
 - `ResultState $state`
-- `list<Issue> $issues` — warnings for unknown keys, deprecated fields,
+- `IssueCollection $issues` — warnings for unknown keys, deprecated fields,
   invalid email format, unresolvable enum values
 
 ### ExtEmConfValidator
@@ -316,7 +323,7 @@ rules are applied.
 **Output:** `ValidationResult`
 - `bool isValid()` — true when no ERROR issues are present
 - `ResultState $state`
-- `list<Issue> $issues`
+- `IssueCollection $issues`
 
 ### ExtEmConfNormalizer
 
@@ -327,7 +334,8 @@ never modified.
 
 Fields not valid for the target version are omitted from the new object.
 Each omitted field is recorded in `$droppedItems` as an `Issue` with
-severity `WARNING`. `$unknownProperties` is always reset to `[]`.
+severity `WARNING`. `$unknownProperties` is always reset to an empty
+`UnknownPropertyCollection`.
 
 **Mandatory-field defaults:**
 - `category` — when `null` or an unrecognised raw string, the normalized
@@ -347,7 +355,7 @@ severity `WARNING`. `$unknownProperties` is always reset to `[]`.
 - `ExtEmConf $extEmConf` — new, clean instance
 - `bool $hasChanges` — true when anything was dropped or defaulted
 - `ResultState $state`
-- `list<Issue> $droppedItems`
+- `IssueCollection $droppedItems`
 
 ### ExtEmConfWriter
 
@@ -372,13 +380,20 @@ included with an inline `// @deprecated` comment. Fields in
 ## Result Infrastructure
 
 ```
-ResultState   (enum)        SUCCESS | WARNING | FAILURE   — overall state
-IssueSeverity (enum)        WARNING | ERROR               — per-issue severity
-Issue         (DTO)         path (dot notation) + message + IssueSeverity
-ReadResult    (DTO)         ExtEmConf|null + ResultState + list<Issue>
-ValidationResult (DTO)      bool isValid() + ResultState + list<Issue>
-NormalizationResult (DTO)   ExtEmConf + bool $hasChanges + ResultState + list<Issue>
+ResultState        (enum)        SUCCESS | WARNING | FAILURE   — overall state
+IssueSeverity      (enum)        WARNING | ERROR               — per-issue severity
+Issue              (DTO)         path (dot notation) + message + IssueSeverity
+IssueCollection    (Collection)  Countable + IteratorAggregate over Issue
+ReadResult         (DTO)         ExtEmConf|null + ResultState + IssueCollection
+ValidationResult   (DTO)         bool isValid() + ResultState + IssueCollection
+NormalizationResult (DTO)        ExtEmConf + bool $hasChanges + ResultState + IssueCollection
 ```
+
+`IssueCollection` exposes `all()`, `count()`, `isEmpty()`, `paths()`,
+`withSeverity(IssueSeverity)`, `countBySeverity(IssueSeverity)`,
+`hasErrors()`, `hasWarnings()`, and `merge(IssueCollection): self`.
+`has`/`get` do not apply because issues are positional and the same
+path can repeat.
 
 Issue paths use dot notation mirroring the array key path in the source
 file, e.g. `constraints.depends.typo3` or `author_email`. Typo'd
@@ -397,9 +412,10 @@ recognised and migrated:
 | `conflict` | `conflicts` |
 
 The reader captures entries written under any of these typo'd keys on
-`Constraints::$migratable` (`array<string, DependencyCollection>`,
-keyed by typo'd source key) instead of dropping them silently. The
-`Issue` instances surfaced along the pipeline are:
+`Constraints::$migratable`, a `MigratableConstraints` DTO that mirrors
+`Constraints` with three named `DependencyCollection` properties
+(`$depend`, `$suggest`, `$conflict`). The `Issue` instances surfaced
+along the pipeline are:
 
 * `ExtEmConfReader` — one `WARNING` per typo group on path
   `constraints.{$typoKey}` plus the same per-entry version-string
@@ -408,14 +424,16 @@ keyed by typo'd source key) instead of dropping them silently. The
   `extemconf:normalize` and one `WARNING` per typo entry whose
   extension key collides with an existing canonical entry.
 * `ExtEmConfNormalizer` — merges non-colliding entries into the
-  canonical collection and clears `$migratable`. Each migration emits
-  a `WARNING` on `constraints.{$canonicalKey}.{$extKey}`. Collisions
-  keep the canonical entry, drop the typo'd one, and emit a
-  `WARNING` on `constraints.{$typoKey}.{$extKey}`. Migration always
-  flips `NormalizationResult::$hasChanges` to `true`.
+  canonical collection and replaces `$migratable` with a fresh empty
+  `MigratableConstraints`. Each migration emits a `WARNING` on
+  `constraints.{$canonicalKey}.{$extKey}`. Collisions keep the
+  canonical entry, drop the typo'd one, and emit a `WARNING` on
+  `constraints.{$typoKey}.{$extKey}`. Migration always flips
+  `NormalizationResult::$hasChanges` to `true`.
 
-The writer never emits the `migratable` map — only the canonical
-groups are rendered, so the rewritten file is free of typo'd keys.
+The writer never emits the `MigratableConstraints` DTO — only the
+canonical groups are rendered, so the rewritten file is free of
+typo'd keys.
 
 ---
 
@@ -452,8 +470,42 @@ self-contained file that `ExtEmConfReader` can include. Fixtures:
 | `constraints_typo_collision/` | Same extension key in canonical and typo'd constraint groups |
 
 Tests cover the full pipeline: read → validate → normalize → write.
-A dedicated assertion confirms that keys from `$unknownProperties` are
-absent in writer output.
+A dedicated assertion confirms that keys held by
+`$unknownProperties` (queried via `->has()`) are absent from writer
+output.
+
+---
+
+## Collections and DTOs
+
+The codebase enforces a project rule that **plain `array` properties
+are forbidden on classes that are not themselves a Collection or
+Container**. Replacements use one of these patterns:
+
+- **Typed DTO** — for an associative array of scalars: declare each
+  field as a strongly-typed property.
+- **Keyed Collection** — for an associative array of objects:
+  introduce a `final readonly class XCollection implements Countable,
+  IteratorAggregate` with `private array $items` storage and the
+  surface `all() / count() / isEmpty() / has(string) / get(string)`.
+- **List Collection** — for a list of objects without a stable
+  identifier: same shape minus `has`/`get`, plus domain-specific
+  filters (e.g. `IssueCollection::withSeverity()` and `paths()`).
+
+Collections in `src/`:
+
+| Class | Item | Identifier | has/get |
+|---|---|---|---|
+| `IssueCollection` | `Issue` | none (positional) | no |
+| `DependencyCollection` | `Dependency` | `extensionKey` | yes |
+| `Psr4Collection` | `Psr4Entry` | `namespace` | yes |
+| `ClassmapCollection` | `ClassmapEntry` | `path` | yes |
+| `UnknownPropertyCollection` | `UnknownProperty` | `key` | yes |
+
+`UnknownProperty::$value` is intentionally typed `mixed`: raw
+`ext_emconf.php` files can put any structure under an unknown key,
+and the entire pipeline only ever ignores or echoes the value, never
+inspects it. This is a documented exception to the rule.
 
 ### Test conventions
 
