@@ -151,8 +151,8 @@ final class ExtEmConfReader
             title: $this->readString($raw, 'title'),
             description: $this->readString($raw, 'description'),
             version: $this->readString($raw, 'version'),
-            category: $this->readCategory($raw, $issues),
-            state: $this->readState($raw, $issues),
+            category: $this->readCategory($raw),
+            state: $this->readState($raw),
             author: $this->readString($raw, 'author'),
             authorEmail: $this->readString($raw, 'author_email'),
             authorCompany: $this->readString($raw, 'author_company'),
@@ -180,9 +180,8 @@ final class ExtEmConfReader
 
     /**
      * @param array<string, mixed> $raw
-     * @param list<Issue>          $issues
      */
-    private function readCategory(array $raw, array &$issues): Category|string|null
+    private function readCategory(array $raw): Category|string|null
     {
         if (!array_key_exists('category', $raw)) {
             return null;
@@ -193,25 +192,13 @@ final class ExtEmConfReader
             return null;
         }
 
-        $category = Category::tryFrom($value);
-        if ($category !== null) {
-            return $category;
-        }
-
-        $issues[] = new Issue(
-            path: 'category',
-            message: sprintf('Unrecognised category value "%s".', $value),
-            severity: IssueSeverity::WARNING,
-        );
-
-        return $value;
+        return Category::tryFrom($value) ?? $value;
     }
 
     /**
      * @param array<string, mixed> $raw
-     * @param list<Issue>          $issues
      */
-    private function readState(array $raw, array &$issues): State|string|null
+    private function readState(array $raw): State|string|null
     {
         if (!array_key_exists('state', $raw)) {
             return null;
@@ -222,18 +209,7 @@ final class ExtEmConfReader
             return null;
         }
 
-        $state = State::tryFrom($value);
-        if ($state !== null) {
-            return $state;
-        }
-
-        $issues[] = new Issue(
-            path: 'state',
-            message: sprintf('Unrecognised state value "%s".', $value),
-            severity: IssueSeverity::WARNING,
-        );
-
-        return $value;
+        return State::tryFrom($value) ?? $value;
     }
 
     /**

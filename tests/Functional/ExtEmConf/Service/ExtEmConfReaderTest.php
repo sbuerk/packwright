@@ -106,6 +106,44 @@ final class ExtEmConfReaderTest extends TestCase
 
         self::assertNotNull($result->extEmConf);
         self::assertSame('totally_made_up_state', $result->extEmConf->state);
+        self::assertSame(ResultState::SUCCESS, $result->state);
+        $statePaths = array_filter($result->issues, static fn($i) => $i->path === 'state');
+        self::assertEmpty($statePaths);
+    }
+
+    #[Test]
+    public function readFileWithUnrecognisedCategoryValueDoesNotEmitReaderIssue(): void
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_reader_');
+        self::assertNotFalse($tempFile);
+        file_put_contents($tempFile, <<<'PHP'
+<?php
+
+$EM_CONF[$_EXTKEY] = [
+    'title' => 'Bogus Category Extension',
+    'description' => 'Has an unrecognised category for reader contract testing.',
+    'version' => '1.0.0',
+    'category' => 'totally_unknown_category',
+    'state' => 'stable',
+    'constraints' => [
+        'depends' => ['typo3' => '13.4.0-13.4.99'],
+        'conflicts' => [],
+        'suggests' => [],
+    ],
+];
+PHP);
+
+        try {
+            $result = (new ExtEmConfReader())->read($tempFile);
+
+            self::assertNotNull($result->extEmConf);
+            self::assertSame('totally_unknown_category', $result->extEmConf->category);
+            self::assertSame(ResultState::SUCCESS, $result->state);
+            $categoryPaths = array_filter($result->issues, static fn($i) => $i->path === 'category');
+            self::assertEmpty($categoryPaths);
+        } finally {
+            @unlink($tempFile);
+        }
     }
 
     #[Test]
