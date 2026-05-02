@@ -54,7 +54,7 @@ final class ListCommand extends Command
             ->addOption(
                 name: 'json',
                 mode: InputOption::VALUE_NONE,
-                description: 'Output a JSON document keyed by absolute file path instead of a table.',
+                description: 'Output a JSON document keyed by the folder containing each `ext_emconf.php` instead of a table.',
             )
             ->addOption(
                 name: 'strict',
@@ -211,7 +211,12 @@ final class ListCommand extends Command
     {
         $payload = [];
         foreach ($rows as $row) {
-            $payload[$row['file']] = [
+            $folder = dirname($row['file']);
+            $composerPath = $folder . '/composer.json';
+
+            $payload[$folder] = [
+                'file' => is_file($row['file']) ? $row['file'] : '',
+                'composerFile' => is_file($composerPath) ? $composerPath : '',
                 'data' => $row['data'],
                 'composer' => [
                     'extensionKey' => $row['composer']->extensionKey,

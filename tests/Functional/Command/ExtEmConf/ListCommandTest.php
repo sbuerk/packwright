@@ -61,9 +61,11 @@ final class ListCommandTest extends TestCase
         $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
         self::assertGreaterThanOrEqual(5, count($payload));
-        foreach (array_keys($payload) as $absolute) {
-            self::assertStringStartsWith('/', (string)$absolute);
-            self::assertStringEndsWith('/ext_emconf.php', (string)$absolute);
+        foreach ($payload as $folder => $entry) {
+            self::assertStringStartsWith('/', (string)$folder);
+            self::assertStringNotContainsString('/ext_emconf.php', (string)$folder);
+            self::assertIsArray($entry);
+            self::assertSame($folder . '/ext_emconf.php', $entry['file']);
         }
     }
 
@@ -98,7 +100,7 @@ final class ListCommandTest extends TestCase
     }
 
     #[Test]
-    public function jsonOutputIsKeyedByAbsolutePathWithDataAndValidation(): void
+    public function jsonOutputIsKeyedByFolderWithFileAndComposerFile(): void
     {
         $fixture = dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/v13_full/ext_emconf.php';
 
@@ -112,13 +114,17 @@ final class ListCommandTest extends TestCase
         $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
 
-        $expectedKey = realpath($fixture);
-        self::assertNotFalse($expectedKey);
+        $resolvedFile = realpath($fixture);
+        self::assertNotFalse($resolvedFile);
+        $expectedKey = dirname($resolvedFile);
         self::assertSame([$expectedKey], array_keys($payload));
 
         $entry = $payload[$expectedKey];
         self::assertIsArray($entry);
+        self::assertSame($resolvedFile, $entry['file']);
+        self::assertSame('', $entry['composerFile']);
         self::assertArrayHasKey('data', $entry);
+        self::assertArrayHasKey('composer', $entry);
         self::assertArrayHasKey('validation', $entry);
         self::assertSame('V13 Full Extension', $entry['data']['title']);
         self::assertSame('1.0.0', $entry['data']['version']);
@@ -133,8 +139,9 @@ final class ListCommandTest extends TestCase
     #[Test]
     public function jsonEntryForUnparseableFileHasNullDataAndFailureState(): void
     {
-        $tempFile = tempnam(sys_get_temp_dir(), 'packwright_list_');
-        self::assertNotFalse($tempFile);
+        $dir = sys_get_temp_dir() . '/packwright_list_unparseable_' . bin2hex(random_bytes(6));
+        mkdir($dir);
+        $tempFile = $dir . '/ext_emconf.php';
         file_put_contents($tempFile, '<?php this is not valid PHP');
 
         try {
@@ -148,13 +155,17 @@ final class ListCommandTest extends TestCase
             self::assertSame(Command::SUCCESS, $exitCode);
             $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
             self::assertIsArray($payload);
-            self::assertArrayHasKey($tempFile, $payload);
-            self::assertNull($payload[$tempFile]['data']);
-            self::assertSame('FAILURE', $payload[$tempFile]['validation']['state']);
-            self::assertFalse($payload[$tempFile]['validation']['isValid']);
-            self::assertNotEmpty($payload[$tempFile]['validation']['issues']);
+            self::assertArrayHasKey($dir, $payload);
+            $entry = $payload[$dir];
+            self::assertSame($tempFile, $entry['file']);
+            self::assertSame('', $entry['composerFile']);
+            self::assertNull($entry['data']);
+            self::assertSame('FAILURE', $entry['validation']['state']);
+            self::assertFalse($entry['validation']['isValid']);
+            self::assertNotEmpty($entry['validation']['issues']);
         } finally {
             @unlink($tempFile);
+            @rmdir($dir);
         }
     }
 
@@ -286,10 +297,13 @@ final class ListCommandTest extends TestCase
         $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
 
-        $expectedKey = realpath($fixture);
-        self::assertNotFalse($expectedKey);
+        $resolvedFile = realpath($fixture);
+        self::assertNotFalse($resolvedFile);
+        $expectedKey = dirname($resolvedFile);
         $entry = $payload[$expectedKey];
         self::assertIsArray($entry);
+        self::assertSame($resolvedFile, $entry['file']);
+        self::assertSame($expectedKey . '/composer.json', $entry['composerFile']);
         self::assertArrayHasKey('composer', $entry);
         self::assertArrayHasKey('data', $entry);
         self::assertArrayHasKey('validation', $entry);
@@ -319,8 +333,12 @@ final class ListCommandTest extends TestCase
 
         $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
-        $entry = $payload[(string)realpath($fixture)];
+        $resolvedFile = (string)realpath($fixture);
+        $expectedKey = dirname($resolvedFile);
+        $entry = $payload[$expectedKey];
 
+        self::assertSame($resolvedFile, $entry['file']);
+        self::assertSame('', $entry['composerFile']);
         self::assertSame(
             [
                 'extensionKey' => '',
@@ -358,7 +376,9 @@ final class ListCommandTest extends TestCase
 
             $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
             self::assertIsArray($payload);
-            $entry = $payload[$extEmConf];
+            $entry = $payload[$dir];
+            self::assertSame($extEmConf, $entry['file']);
+            self::assertSame($composer, $entry['composerFile']);
             self::assertNull($entry['data']);
             self::assertSame('FAILURE', $entry['validation']['state']);
             self::assertSame('vendor/broken-emconf', $entry['composer']['packageName']);
@@ -398,7 +418,9 @@ final class ListCommandTest extends TestCase
             self::assertSame(Command::SUCCESS, $strictExit);
             $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
             self::assertIsArray($payload);
-            $entry = $payload[$extEmConf];
+            $entry = $payload[$dir];
+            self::assertSame($extEmConf, $entry['file']);
+            self::assertSame($composer, $entry['composerFile']);
             self::assertSame(
                 [
                     'extensionKey' => '',
