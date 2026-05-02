@@ -179,4 +179,66 @@ PHP);
         self::assertCount(1, $result->extEmConf->autoloadDev->psr4);
         self::assertSame('MyVendor\\MyExtV9\\Tests\\', $result->extEmConf->autoloadDev->psr4->all()[0]->namespace);
     }
+
+    #[Test]
+    public function readFileWithTypoConstraintsKeysCapturesEntriesUnderMigratable(): void
+    {
+        $result = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/constraints_typo/ext_emconf.php');
+
+        self::assertSame(ResultState::WARNING, $result->state);
+        self::assertNotNull($result->extEmConf);
+
+        $migratable = $result->extEmConf->constraints->migratable;
+        self::assertArrayHasKey('depend', $migratable);
+        self::assertArrayHasKey('suggest', $migratable);
+        self::assertArrayHasKey('conflict', $migratable);
+
+        self::assertCount(2, $migratable['depend']);
+        self::assertCount(1, $migratable['suggest']);
+        self::assertCount(1, $migratable['conflict']);
+
+        $phpDep = iterator_to_array($migratable['depend'])['php'] ?? null;
+        self::assertNotNull($phpDep);
+        self::assertInstanceOf(VersionRange::class, $phpDep->version);
+    }
+
+    #[Test]
+    public function readFileWithTypoConstraintsKeysLeavesCanonicalGroupsUntouched(): void
+    {
+        $result = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/constraints_typo/ext_emconf.php');
+
+        self::assertNotNull($result->extEmConf);
+        self::assertCount(1, $result->extEmConf->constraints->depends);
+        self::assertCount(0, $result->extEmConf->constraints->conflicts);
+        self::assertCount(0, $result->extEmConf->constraints->suggests);
+
+        $typo3Dep = iterator_to_array($result->extEmConf->constraints->depends)['typo3'] ?? null;
+        self::assertNotNull($typo3Dep);
+    }
+
+    #[Test]
+    public function readFileWithTypoConstraintsKeysEmitsMigrationHintIssuePerGroup(): void
+    {
+        $result = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/constraints_typo/ext_emconf.php');
+
+        $issuePaths = array_map(static fn($i) => $i->path, $result->issues);
+        self::assertContains('constraints.depend', $issuePaths);
+        self::assertContains('constraints.suggest', $issuePaths);
+        self::assertContains('constraints.conflict', $issuePaths);
+    }
+
+    #[Test]
+    public function readFileWithTypoConstraintsKeysAppliesSubValueValidationToTypoEntries(): void
+    {
+        $result = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/constraints_typo/ext_emconf.php');
+
+        $issuePaths = array_map(static fn($i) => $i->path, $result->issues);
+        self::assertContains('constraints.depend.broken', $issuePaths);
+
+        $migratable = $result->extEmConf?->constraints->migratable['depend'] ?? null;
+        self::assertNotNull($migratable);
+        $brokenDep = iterator_to_array($migratable)['broken'] ?? null;
+        self::assertNotNull($brokenDep);
+        self::assertInstanceOf(AllVersions::class, $brokenDep->version);
+    }
 }

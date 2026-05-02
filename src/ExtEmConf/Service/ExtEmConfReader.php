@@ -55,6 +55,18 @@ final class ExtEmConfReader
         'createDirs',
     ];
 
+    /**
+     * Map of singular typo'd `constraints` sub-keys to their canonical
+     * plural counterparts. Entries written under the typo'd keys are
+     * captured separately so that the validator can warn and the
+     * normalizer can migrate them.
+     */
+    private const CONSTRAINTS_MIGRATION_MAP = [
+        'depend' => 'depends',
+        'suggest' => 'suggests',
+        'conflict' => 'conflicts',
+    ];
+
     public function __construct(
         private readonly VersionConstraintParser $versionConstraintParser = new VersionConstraintParser(),
     ) {}
@@ -246,10 +258,33 @@ final class ExtEmConfReader
             return new Constraints();
         }
 
+        $migratable = [];
+        foreach (self::CONSTRAINTS_MIGRATION_MAP as $typoKey => $canonicalKey) {
+            if (!array_key_exists($typoKey, $constraintsRaw)) {
+                continue;
+            }
+
+            $issues[] = new Issue(
+                path: 'constraints.' . $typoKey,
+                message: sprintf(
+                    'Unknown constraints key "%s"; will be migrated to "%s" on normalization.',
+                    $typoKey,
+                    $canonicalKey,
+                ),
+                severity: IssueSeverity::WARNING,
+            );
+
+            $collection = $this->readDependencyCollection($constraintsRaw, $typoKey, $issues);
+            if (!$collection->isEmpty()) {
+                $migratable[$typoKey] = $collection;
+            }
+        }
+
         return new Constraints(
             depends: $this->readDependencyCollection($constraintsRaw, 'depends', $issues),
             conflicts: $this->readDependencyCollection($constraintsRaw, 'conflicts', $issues),
             suggests: $this->readDependencyCollection($constraintsRaw, 'suggests', $issues),
+            migratable: $migratable,
         );
     }
 
