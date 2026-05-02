@@ -4,8 +4,15 @@ declare(strict_types=1);
 
 namespace Packwright\Tests\Functional\ExtEmConf\Service;
 
+use Packwright\ExtEmConf\Dto\Constraints\Constraints;
+use Packwright\ExtEmConf\Dto\Constraints\Dependency;
+use Packwright\ExtEmConf\Dto\Constraints\DependencyCollection;
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
+use Packwright\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
 use Packwright\ExtEmConf\Dto\ExtEmConf;
+use Packwright\ExtEmConf\Dto\Version;
 use Packwright\ExtEmConf\Enum\Category;
+use Packwright\ExtEmConf\Enum\ConstraintVersionType;
 use Packwright\ExtEmConf\Enum\State;
 use Packwright\ExtEmConf\Enum\Typo3Version;
 use Packwright\ExtEmConf\Service\ExtEmConfNormalizer;
@@ -341,6 +348,171 @@ final class ExtEmConfNormalizerTest extends TestCase
         self::assertContains('description', $paths);
         self::assertNotContains('title', $paths);
         self::assertNotContains('version', $paths);
+    }
+
+    #[Test]
+    public function normalizeMigratesTypoConstraintsKeysIntoCanonicalGroup(): void
+    {
+        $result = (new ExtEmConfNormalizer())->normalize(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            constraints: new Constraints(
+                depends: new DependencyCollection([
+                    new Dependency('typo3', ConstraintVersionType::ALL, new AllVersions()),
+                ]),
+                migratable: [
+                    'depend' => new DependencyCollection([
+                        new Dependency(
+                            extensionKey: 'php',
+                            versionType: ConstraintVersionType::VERSION,
+                            version: new SingleVersion(Version::fromString('8.2.0')),
+                        ),
+                    ]),
+                ],
+            ),
+        ));
+
+        self::assertTrue($result->hasChanges);
+        self::assertSame([], $result->extEmConf->constraints->migratable);
+
+        $depends = iterator_to_array($result->extEmConf->constraints->depends);
+        self::assertCount(2, $depends);
+        self::assertArrayHasKey('typo3', $depends);
+        self::assertArrayHasKey('php', $depends);
+
+        $migratedIssue = array_values(array_filter(
+            $result->droppedItems,
+            static fn($i) => $i->path === 'constraints.depends.php',
+        ));
+        self::assertCount(1, $migratedIssue);
+        self::assertStringContainsString('Migrated', $migratedIssue[0]->message);
+        self::assertStringContainsString('depend.php', $migratedIssue[0]->message);
+        self::assertStringContainsString('depends.php', $migratedIssue[0]->message);
+    }
+
+    #[Test]
+    public function normalizeMigratesAllThreeTypoGroupsIntoCanonicalCounterparts(): void
+    {
+        $result = (new ExtEmConfNormalizer())->normalize(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            constraints: new Constraints(
+                migratable: [
+                    'depend' => new DependencyCollection([
+                        new Dependency('php', ConstraintVersionType::ALL, new AllVersions()),
+                    ]),
+                    'suggest' => new DependencyCollection([
+                        new Dependency('news', ConstraintVersionType::ALL, new AllVersions()),
+                    ]),
+                    'conflict' => new DependencyCollection([
+                        new Dependency('old_ext', ConstraintVersionType::ALL, new AllVersions()),
+                    ]),
+                ],
+            ),
+        ));
+
+        self::assertCount(1, $result->extEmConf->constraints->depends);
+        self::assertCount(1, $result->extEmConf->constraints->suggests);
+        self::assertCount(1, $result->extEmConf->constraints->conflicts);
+        self::assertSame([], $result->extEmConf->constraints->migratable);
+    }
+
+    #[Test]
+    public function normalizeCollisionDuringMigrationKeepsCanonicalAndEmitsSkipWarning(): void
+    {
+        $canonicalDep = new Dependency(
+            extensionKey: 'typo3',
+            versionType: ConstraintVersionType::VERSION,
+            version: new SingleVersion(Version::fromString('13.4.0')),
+        );
+
+        $result = (new ExtEmConfNormalizer())->normalize(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            constraints: new Constraints(
+                depends: new DependencyCollection([$canonicalDep]),
+                migratable: [
+                    'depend' => new DependencyCollection([
+                        new Dependency(
+                            extensionKey: 'typo3',
+                            versionType: ConstraintVersionType::VERSION,
+                            version: new SingleVersion(Version::fromString('12.4.0')),
+                        ),
+                    ]),
+                ],
+            ),
+        ));
+
+        $depends = iterator_to_array($result->extEmConf->constraints->depends);
+        self::assertCount(1, $depends);
+        self::assertSame($canonicalDep, $depends['typo3']);
+
+        $skipIssue = array_values(array_filter(
+            $result->droppedItems,
+            static fn($i) => $i->path === 'constraints.depend.typo3',
+        ));
+        self::assertCount(1, $skipIssue);
+        self::assertStringContainsString('Skipped', $skipIssue[0]->message);
+        self::assertStringContainsString('depends.typo3', $skipIssue[0]->message);
+
+        $migrationPath = array_filter(
+            $result->droppedItems,
+            static fn($i) => $i->path === 'constraints.depends.typo3',
+        );
+        self::assertEmpty($migrationPath);
+    }
+
+    #[Test]
+    public function normalizeWithNoMigratableEntriesProducesNoMigrationDroppedItems(): void
+    {
+        $result = (new ExtEmConfNormalizer())->normalize(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            constraints: new Constraints(
+                depends: new DependencyCollection([
+                    new Dependency('typo3', ConstraintVersionType::ALL, new AllVersions()),
+                ]),
+            ),
+        ));
+
+        $migrationItems = array_filter(
+            $result->droppedItems,
+            static fn($i) => str_starts_with($i->path, 'constraints.'),
+        );
+        self::assertEmpty($migrationItems);
+    }
+
+    #[Test]
+    public function normalizeMigrationProducesHasChangesTrue(): void
+    {
+        $result = (new ExtEmConfNormalizer())->normalize(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+            constraints: new Constraints(
+                migratable: [
+                    'depend' => new DependencyCollection([
+                        new Dependency('php', ConstraintVersionType::ALL, new AllVersions()),
+                    ]),
+                ],
+            ),
+        ));
+
+        self::assertTrue($result->hasChanges);
     }
 
     #[Test]

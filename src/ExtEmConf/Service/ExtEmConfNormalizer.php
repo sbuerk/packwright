@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Packwright\ExtEmConf\Service;
 
+use Packwright\ExtEmConf\Dto\Constraints\Constraints;
+use Packwright\ExtEmConf\Dto\Constraints\DependencyCollection;
 use Packwright\ExtEmConf\Dto\ExtEmConf;
 use Packwright\ExtEmConf\Enum\Category;
 use Packwright\ExtEmConf\Enum\IssueSeverity;
@@ -41,6 +43,7 @@ final class ExtEmConfNormalizer
         $clearCacheOnLoad = $this->normalizeClearCacheOnLoad($extEmConf, $targetTypo3Version, $droppedItems);
         $uploadfolder = $this->normalizeUploadfolder($extEmConf, $targetTypo3Version, $droppedItems);
         $createDirs = $this->normalizeCreateDirs($extEmConf, $targetTypo3Version, $droppedItems);
+        $constraints = $this->normalizeMigratableConstraints($extEmConf, $droppedItems);
 
         foreach (array_keys($extEmConf->unknownProperties) as $key) {
             $droppedItems[] = new Issue(
@@ -59,7 +62,7 @@ final class ExtEmConfNormalizer
             author: $extEmConf->author,
             authorEmail: $extEmConf->authorEmail,
             authorCompany: $extEmConf->authorCompany,
-            constraints: $extEmConf->constraints,
+            constraints: $constraints,
             autoload: $extEmConf->autoload,
             autoloadDev: $extEmConf->autoloadDev,
             clearCacheOnLoad: $clearCacheOnLoad,
@@ -169,6 +172,87 @@ final class ExtEmConfNormalizer
         );
 
         return State::BETA;
+    }
+
+    /**
+     * @param list<Issue> $droppedItems
+     */
+    private function normalizeMigratableConstraints(ExtEmConf $extEmConf, array &$droppedItems): Constraints
+    {
+        $constraints = $extEmConf->constraints;
+        if ($constraints->migratable === []) {
+            return $constraints;
+        }
+
+        $depends = $constraints->depends->all();
+        $conflicts = $constraints->conflicts->all();
+        $suggests = $constraints->suggests->all();
+
+        foreach ($constraints->migratable as $typoKey => $collection) {
+            $canonicalKey = ExtEmConfReader::CONSTRAINTS_MIGRATION_MAP[$typoKey] ?? null;
+            if ($canonicalKey === null) {
+                continue;
+            }
+
+            foreach ($collection->all() as $candidate) {
+                $existing = match ($canonicalKey) {
+                    'depends' => $depends,
+                    'conflicts' => $conflicts,
+                    'suggests' => $suggests,
+                };
+
+                $collides = false;
+                foreach ($existing as $entry) {
+                    if ($entry->extensionKey === $candidate->extensionKey) {
+                        $collides = true;
+                        break;
+                    }
+                }
+
+                if ($collides) {
+                    $droppedItems[] = new Issue(
+                        path: 'constraints.' . $typoKey . '.' . $candidate->extensionKey,
+                        message: sprintf(
+                            'Skipped migration of "%s.%s": canonical "%s.%s" already defined.',
+                            $typoKey,
+                            $candidate->extensionKey,
+                            $canonicalKey,
+                            $candidate->extensionKey,
+                        ),
+                        severity: IssueSeverity::WARNING,
+                    );
+
+                    continue;
+                }
+
+                $droppedItems[] = new Issue(
+                    path: 'constraints.' . $canonicalKey . '.' . $candidate->extensionKey,
+                    message: sprintf(
+                        'Migrated "%s.%s" to "%s.%s".',
+                        $typoKey,
+                        $candidate->extensionKey,
+                        $canonicalKey,
+                        $candidate->extensionKey,
+                    ),
+                    severity: IssueSeverity::WARNING,
+                );
+
+                if ($canonicalKey === 'depends') {
+                    $depends[] = $candidate;
+                } elseif ($canonicalKey === 'conflicts') {
+                    $conflicts[] = $candidate;
+                } else {
+                    $suggests[] = $candidate;
+                }
+            }
+        }
+
+        return new Constraints(
+            depends: new DependencyCollection($depends),
+            conflicts: new DependencyCollection($conflicts),
+            suggests: new DependencyCollection($suggests),
+            migratable: [],
+        );
     }
 
     /**
