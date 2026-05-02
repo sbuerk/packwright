@@ -76,19 +76,36 @@ final class ExtEmConfNormalizer
     /**
      * @param list<Issue> $droppedItems
      */
-    private function normalizeCategory(ExtEmConf $extEmConf, array &$droppedItems): ?Category
+    private function normalizeCategory(ExtEmConf $extEmConf, array &$droppedItems): Category
     {
-        if (!is_string($extEmConf->category)) {
+        if ($extEmConf->category instanceof Category) {
             return $extEmConf->category;
+        }
+
+        if (is_string($extEmConf->category)) {
+            $droppedItems[] = new Issue(
+                path: 'category',
+                message: sprintf(
+                    'Replaced unrecognised category value "%s" with default "%s".',
+                    $extEmConf->category,
+                    Category::MISC->value,
+                ),
+                severity: IssueSeverity::WARNING,
+            );
+
+            return Category::MISC;
         }
 
         $droppedItems[] = new Issue(
             path: 'category',
-            message: sprintf('Dropped unrecognised category value "%s".', $extEmConf->category),
+            message: sprintf(
+                'Field "category" was missing; wrote default "%s".',
+                Category::MISC->value,
+            ),
             severity: IssueSeverity::WARNING,
         );
 
-        return null;
+        return Category::MISC;
     }
 
     /**

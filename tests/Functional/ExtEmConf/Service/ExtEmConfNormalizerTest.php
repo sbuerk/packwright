@@ -30,7 +30,7 @@ final class ExtEmConfNormalizerTest extends TestCase
     }
 
     #[Test]
-    public function normalizeDropsRawStringCategory(): void
+    public function normalizeReplacesRawStringCategoryWithMisc(): void
     {
         $result = (new ExtEmConfNormalizer())->normalize(new ExtEmConf(
             title: 'My Extension',
@@ -41,10 +41,37 @@ final class ExtEmConfNormalizerTest extends TestCase
         ));
 
         self::assertTrue($result->hasChanges);
-        self::assertNull($result->extEmConf->category);
+        self::assertSame(Category::MISC, $result->extEmConf->category);
 
-        $paths = array_map(static fn($i) => $i->path, $result->droppedItems);
-        self::assertContains('category', $paths);
+        $categoryIssues = array_values(array_filter(
+            $result->droppedItems,
+            static fn($i) => $i->path === 'category',
+        ));
+        self::assertCount(1, $categoryIssues);
+        self::assertStringContainsString('totally_unknown', $categoryIssues[0]->message);
+        self::assertStringContainsString('misc', $categoryIssues[0]->message);
+    }
+
+    #[Test]
+    public function normalizeMissingCategoryDefaultsToMisc(): void
+    {
+        $result = (new ExtEmConfNormalizer())->normalize(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            state: State::STABLE,
+        ));
+
+        self::assertTrue($result->hasChanges);
+        self::assertSame(Category::MISC, $result->extEmConf->category);
+
+        $categoryIssues = array_values(array_filter(
+            $result->droppedItems,
+            static fn($i) => $i->path === 'category',
+        ));
+        self::assertCount(1, $categoryIssues);
+        self::assertStringContainsString('missing', $categoryIssues[0]->message);
+        self::assertStringContainsString('misc', $categoryIssues[0]->message);
     }
 
     #[Test]

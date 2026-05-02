@@ -125,15 +125,26 @@ final class ExtEmConfValidator
      */
     private function validateCategory(ExtEmConf $extEmConf, array &$issues): void
     {
-        if (!is_string($extEmConf->category)) {
+        if ($extEmConf->category === null) {
+            $issues[] = new Issue(
+                path: 'category',
+                message: 'Field "category" is missing; `extemconf:normalize` will write the default "misc".',
+                severity: IssueSeverity::WARNING,
+            );
+
             return;
         }
 
-        $issues[] = new Issue(
-            path: 'category',
-            message: sprintf('Unrecognised category value "%s".', $extEmConf->category),
-            severity: IssueSeverity::WARNING,
-        );
+        if (is_string($extEmConf->category)) {
+            $issues[] = new Issue(
+                path: 'category',
+                message: sprintf(
+                    'Unrecognised category value "%s"; `extemconf:normalize` will replace it with the default "misc".',
+                    $extEmConf->category,
+                ),
+                severity: IssueSeverity::WARNING,
+            );
+        }
     }
 
     /**

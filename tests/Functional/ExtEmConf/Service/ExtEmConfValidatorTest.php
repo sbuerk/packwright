@@ -144,8 +144,35 @@ final class ExtEmConfValidatorTest extends TestCase
         ));
 
         self::assertSame(ResultState::WARNING, $result->state);
-        $warnPaths = array_map(static fn($i) => $i->path, $result->issues);
-        self::assertContains('category', $warnPaths);
+        $categoryIssues = array_values(array_filter(
+            $result->issues,
+            static fn($i) => $i->path === 'category',
+        ));
+        self::assertCount(1, $categoryIssues);
+        self::assertStringContainsString('some_unknown_category', $categoryIssues[0]->message);
+        self::assertStringContainsString('misc', $categoryIssues[0]->message);
+    }
+
+    #[Test]
+    public function validateMissingCategoryReturnsWarning(): void
+    {
+        $result = (new ExtEmConfValidator())->validate(new ExtEmConf(
+            title: 'My Extension',
+            description: 'A great extension.',
+            version: '1.0.0',
+            state: State::STABLE,
+            author: 'John Doe',
+            authorEmail: 'john@example.com',
+        ));
+
+        self::assertSame(ResultState::WARNING, $result->state);
+        $categoryIssues = array_values(array_filter(
+            $result->issues,
+            static fn($i) => $i->path === 'category',
+        ));
+        self::assertCount(1, $categoryIssues);
+        self::assertStringContainsString('missing', $categoryIssues[0]->message);
+        self::assertStringContainsString('misc', $categoryIssues[0]->message);
     }
 
     #[Test]
