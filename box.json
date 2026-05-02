@@ -1,6 +1,6 @@
 {
-    "main": "bin/sb-releaser",
-    "output": "build/sb-releaser",
+    "main": "bin/packwright",
+    "output": "build/packwright",
     "chmod": "0755",
     "compression": "GZ",
     "directories": [
