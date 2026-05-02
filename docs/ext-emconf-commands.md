@@ -113,6 +113,77 @@ absolute paths.
 
 ---
 
+## `extemconf:get`
+
+Reads each input file and prints selected scalar fields. Read-only:
+the validator and writer are not involved.
+
+### Usage
+
+```
+packwright extemconf:get <paths...> [-f <field>] [--json] [-t <version>]
+```
+
+### Arguments
+
+Same semantics as `extemconf:validate` (variadic literal/file/directory/glob).
+
+### Options
+
+- `-f`, `--field` — repeatable; restrict output to one or more of:
+  `title`, `description`, `version`, `category`, `state`, `author`,
+  `author_email`, `author_company`. When omitted, all fields are
+  printed in that order. Field names mirror the snake_case keys in
+  `ext_emconf.php`.
+- `--json` — emit a JSON document instead of one table per file.
+- `-t`, `--typo3-version` — accepted for symmetry with the other
+  `extemconf:*` commands but does not affect output (read-only
+  command). Invalid values still produce `Command::INVALID`.
+
+### Output
+
+Default (one block per file):
+
+```
+./packages/my_ext/ext_emconf.php
++----------+-------------------+
+| Field    | Value             |
++----------+-------------------+
+| title    | My Extension      |
+| version  | 1.2.3             |
+| state    | stable            |
++----------+-------------------+
+```
+
+Empty strings render as `(empty)` and missing optional values (e.g.
+`category` is `null`) render as `(null)`.
+
+### JSON shape
+
+```json
+{
+  "command": "extemconf:get",
+  "files": [
+    {
+      "path": "/abs/path/ext_emconf.php",
+      "fields": { "title": "My Extension", "state": "stable" }
+    }
+  ]
+}
+```
+
+A file that fails to read is emitted with `error` instead of `fields`
+and contributes to exit code `1`.
+
+### Exit codes
+
+- `0` — every file read successfully.
+- `1` — at least one file failed to read.
+- `2` — usage error (no files matched, missing literal path, invalid
+  `--typo3-version`, unknown `--field`).
+
+---
+
 ## `extemconf:normalize`
 
 Reads each input file, runs `ExtEmConfNormalizer`, and writes the result
