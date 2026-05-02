@@ -31,8 +31,29 @@ final class PathResolverTest extends TestCase
         foreach ($resolved as $path) {
             self::assertSame('ext_emconf.php', basename($path));
         }
-        // All ten fixture directories ship one ext_emconf.php each.
-        self::assertCount(10, $resolved);
+        // 10 flat fixture extensions plus 7 files under Packages/ (5 at the
+        // package-root depth, 2 at deeper Tests/.../Fixtures depth).
+        self::assertCount(17, $resolved);
+    }
+
+    #[Test]
+    public function resolveTwoStarGlobIsBoundedToOneSegmentEach(): void
+    {
+        $pattern = __DIR__ . '/../Fixtures/Packages/*/*/ext_emconf.php';
+
+        $resolved = (new PathResolver())->resolve([$pattern]);
+
+        $expected = [
+            realpath(__DIR__ . '/../Fixtures/Packages/one/package-1/ext_emconf.php'),
+            realpath(__DIR__ . '/../Fixtures/Packages/one/package-2/ext_emconf.php'),
+            realpath(__DIR__ . '/../Fixtures/Packages/three/package-4/ext_emconf.php'),
+            realpath(__DIR__ . '/../Fixtures/Packages/two/package-2/ext_emconf.php'),
+            realpath(__DIR__ . '/../Fixtures/Packages/two/package-3/ext_emconf.php'),
+        ];
+        self::assertSame($expected, $resolved);
+        foreach ($resolved as $path) {
+            self::assertStringNotContainsString('/Tests/', $path);
+        }
     }
 
     #[Test]
