@@ -282,6 +282,119 @@ shows what would have been written.
 
 ---
 
+## `extemconf:set`
+
+Reads each input file, applies one or more field overrides in memory,
+runs `ExtEmConfValidator`, and (if validation does not fail) writes the
+result through `ExtEmConfWriter`. Validation is **mandatory** — files
+that would end up in `FAILURE` state are skipped without being touched.
+
+### Usage
+
+```
+packwright extemconf:set <paths...> \
+    [--title=...] [--description=...] [--ext-version=...] \
+    [--state=...] [--category=...] \
+    [--author=...] [--author-email=...] [--author-company=...] \
+    [-t <version>] [--strict] [--dry-run] [--json]
+```
+
+### Arguments
+
+Same semantics as `extemconf:validate` (variadic literal/file/directory/glob).
+
+### Options
+
+- One per editable scalar field. The CLI option for `version` is named
+  `--ext-version` to avoid colliding with Symfony's application-level
+  `--version` flag.
+  | CLI option         | `ext_emconf.php` key |
+  |--------------------|----------------------|
+  | `--title`          | `title`              |
+  | `--description`    | `description`        |
+  | `--ext-version`    | `version`            |
+  | `--state`          | `state`              |
+  | `--category`       | `category`           |
+  | `--author`         | `author`             |
+  | `--author-email`   | `author_email`       |
+  | `--author-company` | `author_company`     |
+- `--state` is validated against the `State` enum (`alpha`, `beta`,
+  `stable`, `experimental`, `test`, `obsolete`, `excludeFromUpdates`).
+- `--category` is validated against the `Category` enum (`be`, `module`,
+  `fe`, `plugin`, `misc`, `services`, `templates`, `example`, `doc`,
+  `distribution`).
+- Deprecated fields (`clearCacheOnLoad`, `uploadfolder`, `createDirs`)
+  cannot be set — use `extemconf:normalize` to remove them.
+- `-t`, `--typo3-version` — drives validation rules (deprecated-field
+  warnings) and writer output (omits version-specific deprecated keys).
+- `--strict` — require post-mutation state to be `SUCCESS` before
+  writing. Without `--strict`, `WARNING` is also acceptable; only
+  `FAILURE` blocks the write.
+- `--dry-run` — do not write files; only report what would change.
+- `--json` — emit a JSON document instead of a table.
+
+### Per-file action
+
+Same vocabulary as `extemconf:normalize`:
+
+- `written` — overrides applied and persisted to disk.
+- `dry-run` — `--dry-run` was set; file left untouched.
+- `unchanged` — overrides produced byte-identical output; file left
+  untouched.
+- `skipped` — read failed, or post-mutation validation produced
+  `FAILURE` (or `WARNING` under `--strict`). File is left untouched
+  and the run contributes to exit code `1` only on `FAILURE`.
+
+### Validation gate
+
+`extemconf:set` always runs the validator on the *intended* DTO before
+persisting. The write proceeds only when:
+
+```
+state === SUCCESS                      (always)
+state === WARNING && !strict           (default)
+```
+
+`FAILURE` always blocks. `--strict` additionally blocks `WARNING`. This
+prevents accidentally publishing changes that introduce structural
+errors (e.g. setting `--ext-version="not-a-version"`).
+
+### Exit codes
+
+- `0` — every file produced `SUCCESS`/`WARNING`, or was already
+  unchanged, or was a `--dry-run` preview.
+- `1` — at least one file in `FAILURE` state (read or validation).
+- `2` — usage error: no field given, no files matched, missing literal
+  path, invalid `--typo3-version`, invalid `--state`/`--category`.
+
+### JSON shape
+
+```json
+{
+  "command": "extemconf:set",
+  "typo3Version": 13,
+  "strict": false,
+  "dryRun": false,
+  "files": [
+    {
+      "path": "/abs/path/ext_emconf.php",
+      "state": "SUCCESS",
+      "action": "written",
+      "issues": [],
+      "generated": "<?php\n\n$EM_CONF[$_EXTKEY] = [...];\n"
+    }
+  ],
+  "summary": {
+    "total": 1, "written": 1, "dryRun": 0, "unchanged": 0, "skipped": 0, "failure": 0
+  }
+}
+```
+
+`generated` carries what `ExtEmConfWriter::generate()` produced; `null`
+for files in `skipped` state with no read result.
+
+---
+
 ## Examples
 
 ### Validate every fixture under a directory
