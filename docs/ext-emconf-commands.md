@@ -11,6 +11,12 @@ and both can emit a JSON document for piping into other tools.
 The examples below all invoke `packwright`; the short alias `pkw` is
 interchangeable on the command line.
 
+> **Note on `--json` output:** Every `--json` path emits a single
+> compact line — no whitespace between tokens, no line breaks. The
+> JSON shape examples in this document are pretty-printed for
+> readability; pipe real output through `jq` (or any JSON formatter)
+> to reproduce that layout.
+
 ---
 
 ## `extemconf:list`
@@ -101,7 +107,8 @@ paths containing each `ext_emconf.php`. Each entry repeats that
 folder as `path` for uniform `.value.path` access, exposes the
 absolute file paths explicitly via `file` and `composerFile`,
 followed by the parsed `ext_emconf` data, the extracted composer
-metadata, and a validation block:
+metadata, and a validation block. Real output is a single compact
+line; the example below is pretty-printed for readability:
 
 ```json
 {
