@@ -29,10 +29,13 @@ use Packwright\ExtEmConf\Result\NormalizationResult;
  */
 final class ExtEmConfNormalizer
 {
+    private const REQUIRED_STRING_FIELDS = ['title', 'description', 'version'];
+
     public function normalize(ExtEmConf $extEmConf, ?Typo3Version $targetTypo3Version = null): NormalizationResult
     {
         $droppedItems = [];
 
+        $this->reportEmptyRequiredStringFields($extEmConf, $droppedItems);
         $category = $this->normalizeCategory($extEmConf, $droppedItems);
         $extEmConfState = $this->normalizeState($extEmConf, $droppedItems);
         $clearCacheOnLoad = $this->normalizeClearCacheOnLoad($extEmConf, $targetTypo3Version, $droppedItems);
@@ -71,6 +74,31 @@ final class ExtEmConfNormalizer
             hasChanges: $droppedItems !== [],
             droppedItems: $droppedItems,
         );
+    }
+
+    /**
+     * @param list<Issue> $droppedItems
+     */
+    private function reportEmptyRequiredStringFields(ExtEmConf $extEmConf, array &$droppedItems): void
+    {
+        $values = [
+            'title' => $extEmConf->title,
+            'description' => $extEmConf->description,
+            'version' => $extEmConf->version,
+        ];
+
+        foreach (self::REQUIRED_STRING_FIELDS as $field) {
+            if ($values[$field] === '') {
+                $droppedItems[] = new Issue(
+                    path: $field,
+                    message: sprintf(
+                        'Required field "%s" is empty; wrote an empty string. Set a value before publishing.',
+                        $field,
+                    ),
+                    severity: IssueSeverity::WARNING,
+                );
+            }
+        }
     }
 
     /**

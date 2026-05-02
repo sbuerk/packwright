@@ -51,8 +51,13 @@ final class ExtEmConfValidatorTest extends TestCase
         self::assertFalse($result->isValid());
         self::assertTrue($result->hasErrors());
 
-        $errorPaths = array_map(static fn($i) => $i->path, $result->issues);
-        self::assertContains('title', $errorPaths);
+        $titleIssues = array_values(array_filter(
+            $result->issues,
+            static fn($i) => $i->path === 'title',
+        ));
+        self::assertCount(1, $titleIssues);
+        self::assertStringContainsString('extemconf:normalize', $titleIssues[0]->message);
+        self::assertStringContainsString('empty string', $titleIssues[0]->message);
     }
 
     #[Test]

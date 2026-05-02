@@ -57,10 +57,12 @@ final class ExtEmConfValidator
      */
     private function validateRequiredFields(ExtEmConf $extEmConf, array &$issues): void
     {
+        $hint = '`extemconf:normalize` will write an empty string until you set a value.';
+
         if ($extEmConf->title === '') {
             $issues[] = new Issue(
                 path: 'title',
-                message: 'Field "title" is required and must not be empty.',
+                message: 'Field "title" is required and must not be empty. ' . $hint,
                 severity: IssueSeverity::ERROR,
             );
         }
@@ -68,7 +70,7 @@ final class ExtEmConfValidator
         if ($extEmConf->description === '') {
             $issues[] = new Issue(
                 path: 'description',
-                message: 'Field "description" is required and must not be empty.',
+                message: 'Field "description" is required and must not be empty. ' . $hint,
                 severity: IssueSeverity::ERROR,
             );
         }
@@ -76,7 +78,7 @@ final class ExtEmConfValidator
         if ($extEmConf->version === '') {
             $issues[] = new Issue(
                 path: 'version',
-                message: 'Field "version" is required and must not be empty.',
+                message: 'Field "version" is required and must not be empty. ' . $hint,
                 severity: IssueSeverity::ERROR,
             );
         }

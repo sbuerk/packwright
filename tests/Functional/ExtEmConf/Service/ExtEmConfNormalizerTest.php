@@ -295,6 +295,55 @@ final class ExtEmConfNormalizerTest extends TestCase
     }
 
     #[Test]
+    public function normalizeReportsEmptyRequiredStringFields(): void
+    {
+        $result = (new ExtEmConfNormalizer())->normalize(new ExtEmConf(
+            title: '',
+            description: '',
+            version: '',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+        ));
+
+        self::assertTrue($result->hasChanges);
+        self::assertSame('', $result->extEmConf->title);
+        self::assertSame('', $result->extEmConf->description);
+        self::assertSame('', $result->extEmConf->version);
+
+        $paths = array_map(static fn($i) => $i->path, $result->droppedItems);
+        self::assertContains('title', $paths);
+        self::assertContains('description', $paths);
+        self::assertContains('version', $paths);
+
+        foreach (['title', 'description', 'version'] as $field) {
+            $matches = array_values(array_filter(
+                $result->droppedItems,
+                static fn($i) => $i->path === $field,
+            ));
+            self::assertCount(1, $matches);
+            self::assertStringContainsString('empty string', $matches[0]->message);
+        }
+    }
+
+    #[Test]
+    public function normalizeReportsOnlyOneEmptyRequiredFieldWhenOthersArePopulated(): void
+    {
+        $result = (new ExtEmConfNormalizer())->normalize(new ExtEmConf(
+            title: 'My Extension',
+            description: '',
+            version: '1.0.0',
+            category: Category::PLUGIN,
+            state: State::STABLE,
+        ));
+
+        self::assertTrue($result->hasChanges);
+        $paths = array_map(static fn($i) => $i->path, $result->droppedItems);
+        self::assertContains('description', $paths);
+        self::assertNotContains('title', $paths);
+        self::assertNotContains('version', $paths);
+    }
+
+    #[Test]
     public function normalizeAlwaysReturnsNewDtoInstance(): void
     {
         $dto = new ExtEmConf(
