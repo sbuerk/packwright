@@ -14,10 +14,8 @@ use Packwright\ExtEmConf\Dto\Constraints\Dependency;
 use Packwright\ExtEmConf\Dto\Constraints\DependencyCollection;
 use Packwright\ExtEmConf\Dto\Constraints\VersionValue\AllVersions;
 use Packwright\ExtEmConf\Dto\Constraints\VersionValue\SingleVersion;
-use Packwright\ExtEmConf\Dto\Constraints\VersionValue\VersionRange;
 use Packwright\ExtEmConf\Dto\Constraints\VersionValue\VersionValueInterface;
 use Packwright\ExtEmConf\Dto\ExtEmConf;
-use Packwright\ExtEmConf\Dto\Version;
 use Packwright\ExtEmConf\Enum\Category;
 use Packwright\ExtEmConf\Enum\ConstraintVersionType;
 use Packwright\ExtEmConf\Enum\IssueSeverity;
@@ -56,6 +54,10 @@ final class ExtEmConfReader
         'uploadfolder',
         'createDirs',
     ];
+
+    public function __construct(
+        private readonly VersionConstraintParser $versionConstraintParser = new VersionConstraintParser(),
+    ) {}
 
     public function read(string $filePath): ReadResult
     {
@@ -301,33 +303,9 @@ final class ExtEmConfReader
         string $path,
         array &$issues,
     ): VersionValueInterface {
-        $trimmed = trim($raw);
-
-        if ($trimmed === '' || $trimmed === '*') {
-            return new AllVersions();
-        }
-
-        if (preg_match('/^\d+\.\d+\.\d+-\d+\.\d+\.\d+$/', $trimmed) === 1) {
-            [$lowestStr, $highestStr] = explode('-', $trimmed, 2);
-            try {
-                return new VersionRange(
-                    lowest: Version::fromString($lowestStr),
-                    highest: Version::fromString($highestStr),
-                );
-            } catch (\UnexpectedValueException) {
-                $issues[] = new Issue(
-                    path: $path,
-                    message: sprintf('Invalid version range "%s".', $raw),
-                    severity: IssueSeverity::WARNING,
-                );
-
-                return new AllVersions();
-            }
-        }
-
         try {
-            return new SingleVersion(Version::fromString($trimmed));
-        } catch (\UnexpectedValueException) {
+            return $this->versionConstraintParser->parse($raw);
+        } catch (\InvalidArgumentException) {
             $issues[] = new Issue(
                 path: $path,
                 message: sprintf('Invalid version string "%s".', $raw),
