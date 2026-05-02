@@ -46,7 +46,7 @@ Packwright\ExtEmConf\
       ClassmapEntry            Single classmap path entry
       ClassmapCollection       Ordered collection of ClassmapEntry (Countable, IteratorAggregate)
     Constraints\
-      Constraints              Wraps the three dependency collections
+      Constraints              Wraps the three dependency collections + a `migratable` map for typo'd sub-keys
       DependencyCollection     Ordered list of Dependency items
       Dependency               Extension key + ConstraintVersionType + VersionValueInterface
       VersionValue\
@@ -94,7 +94,7 @@ deprecated in that version, `—` = not present / long gone.
 | `author` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | string | |
 | `author_email` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | string | Validated as email |
 | `author_company` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | string | |
-| `constraints` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | array | depends/conflicts/suggests |
+| `constraints` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | array | depends/conflicts/suggests; singular typos `depend`/`conflict`/`suggest` are migrated on normalization |
 | `autoload` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | array | psr-4, classmap |
 | `autoload-dev` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | array | psr-4, classmap |
 | `clearCacheOnLoad` | ✓ | ✓ | ✓ | ✓ | dep 12.1 | dep | bool | |
@@ -381,7 +381,41 @@ NormalizationResult (DTO)   ExtEmConf + bool $hasChanges + ResultState + list<Is
 ```
 
 Issue paths use dot notation mirroring the array key path in the source
-file, e.g. `constraints.depends.typo3` or `author_email`.
+file, e.g. `constraints.depends.typo3` or `author_email`. Typo'd
+constraints sub-keys appear under their original (singular) form,
+e.g. `constraints.depend.typo3`, until normalization rewrites them.
+
+### Constraints typo migration
+
+Three singular forms of the canonical constraints sub-keys are
+recognised and migrated:
+
+| Typo'd key | Canonical key |
+|---|---|
+| `depend` | `depends` |
+| `suggest` | `suggests` |
+| `conflict` | `conflicts` |
+
+The reader captures entries written under any of these typo'd keys on
+`Constraints::$migratable` (`array<string, DependencyCollection>`,
+keyed by typo'd source key) instead of dropping them silently. The
+`Issue` instances surfaced along the pipeline are:
+
+* `ExtEmConfReader` — one `WARNING` per typo group on path
+  `constraints.{$typoKey}` plus the same per-entry version-string
+  warnings that the canonical groups receive.
+* `ExtEmConfValidator` — one `WARNING` per typo group hinting at
+  `extemconf:normalize` and one `WARNING` per typo entry whose
+  extension key collides with an existing canonical entry.
+* `ExtEmConfNormalizer` — merges non-colliding entries into the
+  canonical collection and clears `$migratable`. Each migration emits
+  a `WARNING` on `constraints.{$canonicalKey}.{$extKey}`. Collisions
+  keep the canonical entry, drop the typo'd one, and emit a
+  `WARNING` on `constraints.{$typoKey}.{$extKey}`. Migration always
+  flips `NormalizationResult::$hasChanges` to `true`.
+
+The writer never emits the `migratable` map — only the canonical
+groups are rendered, so the rewritten file is free of typo'd keys.
 
 ---
 
@@ -414,6 +448,8 @@ self-contained file that `ExtEmConfReader` can include. Fixtures:
 | `minimal/` | Only `title` and `description` |
 | `invalid_keys/` | Contains unknown keys alongside valid ones |
 | `deprecated_keys/` | Contains only deprecated keys to test warning collection |
+| `constraints_typo/` | Uses singular `depend`/`suggest`/`conflict` constraints sub-keys |
+| `constraints_typo_collision/` | Same extension key in canonical and typo'd constraint groups |
 
 Tests cover the full pipeline: read → validate → normalize → write.
 A dedicated assertion confirms that keys from `$unknownProperties` are

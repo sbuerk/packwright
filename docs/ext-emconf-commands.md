@@ -71,6 +71,14 @@ Validate flags the following conditions and tells the operator what
 - `state` — missing (`null`) or unrecognised raw string produces an
   `ERROR`. `extemconf:normalize` substitutes the
   `State::BETA` (`"beta"`) default.
+- Constraints sub-key typos — entries written under the singular
+  forms `constraints.depend`, `constraints.suggest`, or
+  `constraints.conflict` produce one `WARNING` per group hinting that
+  `extemconf:normalize` will migrate them to the canonical plural
+  key. When the same extension key already exists in the canonical
+  group, an additional `WARNING` is emitted on
+  `constraints.{$typoKey}.{$extKey}` indicating that the typo'd entry
+  will be skipped during normalization.
 
 ### Table layout
 
@@ -243,6 +251,19 @@ table view):
   (the writer always emits an explicit key) and recorded so the
   operator knows a placeholder was scaffolded; a real value still has
   to be set by hand.
+
+### Constraints sub-key migration
+
+Entries written under the singular typo'd forms `constraints.depend`,
+`constraints.suggest`, and `constraints.conflict` are migrated to the
+canonical plural keys (`depends`, `suggests`, `conflicts`). Each
+migrated entry is recorded as a `WARNING` on
+`constraints.{$canonicalKey}.{$extKey}` in `droppedItems`. When the
+canonical group already contains an entry for the same extension key
+the typo'd one is dropped, the canonical value is preserved, and the
+collision is recorded as a `WARNING` on
+`constraints.{$typoKey}.{$extKey}`. The rewritten file always emits
+the canonical keys only.
 
 ### Exit codes
 
