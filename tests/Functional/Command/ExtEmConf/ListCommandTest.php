@@ -121,6 +121,7 @@ final class ListCommandTest extends TestCase
 
         $entry = $payload[$expectedKey];
         self::assertIsArray($entry);
+        self::assertSame($expectedKey, $entry['path']);
         self::assertSame($resolvedFile, $entry['file']);
         self::assertSame('', $entry['composerFile']);
         self::assertArrayHasKey('data', $entry);
@@ -157,6 +158,7 @@ final class ListCommandTest extends TestCase
             self::assertIsArray($payload);
             self::assertArrayHasKey($dir, $payload);
             $entry = $payload[$dir];
+            self::assertSame($dir, $entry['path']);
             self::assertSame($tempFile, $entry['file']);
             self::assertSame('', $entry['composerFile']);
             self::assertNull($entry['data']);
@@ -302,6 +304,7 @@ final class ListCommandTest extends TestCase
         $expectedKey = dirname($resolvedFile);
         $entry = $payload[$expectedKey];
         self::assertIsArray($entry);
+        self::assertSame($expectedKey, $entry['path']);
         self::assertSame($resolvedFile, $entry['file']);
         self::assertSame($expectedKey . '/composer.json', $entry['composerFile']);
         self::assertArrayHasKey('composer', $entry);
@@ -337,6 +340,7 @@ final class ListCommandTest extends TestCase
         $expectedKey = dirname($resolvedFile);
         $entry = $payload[$expectedKey];
 
+        self::assertSame($expectedKey, $entry['path']);
         self::assertSame($resolvedFile, $entry['file']);
         self::assertSame('', $entry['composerFile']);
         self::assertSame(
@@ -377,6 +381,7 @@ final class ListCommandTest extends TestCase
             $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
             self::assertIsArray($payload);
             $entry = $payload[$dir];
+            self::assertSame($dir, $entry['path']);
             self::assertSame($extEmConf, $entry['file']);
             self::assertSame($composer, $entry['composerFile']);
             self::assertNull($entry['data']);
@@ -419,6 +424,7 @@ final class ListCommandTest extends TestCase
             $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
             self::assertIsArray($payload);
             $entry = $payload[$dir];
+            self::assertSame($dir, $entry['path']);
             self::assertSame($extEmConf, $entry['file']);
             self::assertSame($composer, $entry['composerFile']);
             self::assertSame(

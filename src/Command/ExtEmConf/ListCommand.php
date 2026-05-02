@@ -215,6 +215,7 @@ final class ListCommand extends Command
             $composerPath = $folder . '/composer.json';
 
             $payload[$folder] = [
+                'path' => is_file($row['file']) ? $folder : '',
                 'file' => is_file($row['file']) ? $row['file'] : '',
                 'composerFile' => is_file($composerPath) ? $composerPath : '',
                 'data' => $row['data'],
