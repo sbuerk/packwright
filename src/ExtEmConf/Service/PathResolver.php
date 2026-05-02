@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace SBReleaser\ExtEmConf\Service;
 
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-use SplFileInfo;
-
 /**
  * Resolves a list of user-supplied path tokens into a sorted, deduplicated
  * list of absolute `ext_emconf.php` file paths.
@@ -105,12 +101,12 @@ final class PathResolver
      */
     private function resolveDirectory(string $directory): array
     {
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($directory, RecursiveDirectoryIterator::SKIP_DOTS),
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS),
         );
 
         $files = [];
-        /** @var SplFileInfo $entry */
+        /** @var \SplFileInfo $entry */
         foreach ($iterator as $entry) {
             if ($entry->isFile() && $entry->getFilename() === 'ext_emconf.php') {
                 $files[] = $this->absolute($entry->getPathname());
