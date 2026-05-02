@@ -20,14 +20,11 @@ use Packwright\ExtEmConf\Enum\ResultState;
  */
 final readonly class NormalizationResult
 {
-    /**
-     * @param list<Issue> $droppedItems
-     */
     public function __construct(
         public ResultState $state,
         public ExtEmConf $extEmConf,
         public bool $hasChanges,
-        public array $droppedItems = [],
+        public IssueCollection $droppedItems = new IssueCollection(),
     ) {}
 
     public function isSuccess(): bool

@@ -167,9 +167,10 @@ final class GetCommand extends Command
     {
         $readResult = $this->reader->read($file);
         if ($readResult->extEmConf === null) {
-            $message = $readResult->issues === []
+            $issues = $readResult->issues->all();
+            $message = $issues === []
                 ? 'Unable to read file.'
-                : $readResult->issues[0]->message;
+                : $issues[0]->message;
 
             return ['file' => $file, 'extEmConf' => null, 'error' => $message];
         }

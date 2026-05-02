@@ -37,7 +37,7 @@ final class ExtEmConfValidatorTest extends TestCase
         ));
 
         self::assertSame(ResultState::SUCCESS, $result->state);
-        self::assertEmpty($result->issues);
+        self::assertTrue($result->issues->isEmpty());
         self::assertTrue($result->isValid());
     }
 
@@ -59,7 +59,7 @@ final class ExtEmConfValidatorTest extends TestCase
         self::assertTrue($result->hasErrors());
 
         $titleIssues = array_values(array_filter(
-            $result->issues,
+            $result->issues->all(),
             static fn($i) => $i->path === 'title',
         ));
         self::assertCount(1, $titleIssues);
@@ -81,7 +81,7 @@ final class ExtEmConfValidatorTest extends TestCase
         ));
 
         self::assertSame(ResultState::FAILURE, $result->state);
-        $errorPaths = array_map(static fn($i) => $i->path, $result->issues);
+        $errorPaths = $result->issues->paths();
         self::assertContains('description', $errorPaths);
     }
 
@@ -99,7 +99,7 @@ final class ExtEmConfValidatorTest extends TestCase
         ));
 
         self::assertSame(ResultState::FAILURE, $result->state);
-        $errorPaths = array_map(static fn($i) => $i->path, $result->issues);
+        $errorPaths = $result->issues->paths();
         self::assertContains('version', $errorPaths);
     }
 
@@ -117,7 +117,7 @@ final class ExtEmConfValidatorTest extends TestCase
         ));
 
         self::assertSame(ResultState::FAILURE, $result->state);
-        $errorPaths = array_map(static fn($i) => $i->path, $result->issues);
+        $errorPaths = $result->issues->paths();
         self::assertContains('version', $errorPaths);
     }
 
@@ -138,7 +138,7 @@ final class ExtEmConfValidatorTest extends TestCase
         self::assertTrue($result->hasWarnings());
         self::assertFalse($result->hasErrors());
 
-        $warnPaths = array_map(static fn($i) => $i->path, $result->issues);
+        $warnPaths = $result->issues->paths();
         self::assertContains('author_email', $warnPaths);
     }
 
@@ -157,7 +157,7 @@ final class ExtEmConfValidatorTest extends TestCase
 
         self::assertSame(ResultState::WARNING, $result->state);
         $categoryIssues = array_values(array_filter(
-            $result->issues,
+            $result->issues->all(),
             static fn($i) => $i->path === 'category',
         ));
         self::assertCount(1, $categoryIssues);
@@ -179,7 +179,7 @@ final class ExtEmConfValidatorTest extends TestCase
 
         self::assertSame(ResultState::WARNING, $result->state);
         $categoryIssues = array_values(array_filter(
-            $result->issues,
+            $result->issues->all(),
             static fn($i) => $i->path === 'category',
         ));
         self::assertCount(1, $categoryIssues);
@@ -202,7 +202,7 @@ final class ExtEmConfValidatorTest extends TestCase
 
         self::assertSame(ResultState::FAILURE, $result->state);
         $stateIssues = array_values(array_filter(
-            $result->issues,
+            $result->issues->all(),
             static fn($i) => $i->path === 'state',
         ));
         self::assertCount(1, $stateIssues);
@@ -225,7 +225,7 @@ final class ExtEmConfValidatorTest extends TestCase
 
         self::assertSame(ResultState::FAILURE, $result->state);
         $stateIssues = array_values(array_filter(
-            $result->issues,
+            $result->issues->all(),
             static fn($i) => $i->path === 'state',
         ));
         self::assertCount(1, $stateIssues);
@@ -249,7 +249,7 @@ final class ExtEmConfValidatorTest extends TestCase
         ));
 
         self::assertSame(ResultState::WARNING, $result->state);
-        $warnPaths = array_map(static fn($i) => $i->path, $result->issues);
+        $warnPaths = $result->issues->paths();
         self::assertContains('my_custom_key', $warnPaths);
     }
 
@@ -271,7 +271,7 @@ final class ExtEmConfValidatorTest extends TestCase
         );
 
         self::assertSame(ResultState::WARNING, $result->state);
-        $warnPaths = array_map(static fn($i) => $i->path, $result->issues);
+        $warnPaths = $result->issues->paths();
         self::assertContains('clearCacheOnLoad', $warnPaths);
     }
 
@@ -290,7 +290,7 @@ final class ExtEmConfValidatorTest extends TestCase
         ));
 
         self::assertSame(ResultState::SUCCESS, $result->state);
-        self::assertEmpty($result->issues);
+        self::assertTrue($result->issues->isEmpty());
     }
 
     #[Test]
@@ -320,7 +320,7 @@ final class ExtEmConfValidatorTest extends TestCase
         self::assertSame(ResultState::WARNING, $result->state);
 
         $migrationIssues = array_values(array_filter(
-            $result->issues,
+            $result->issues->all(),
             static fn($i) => $i->path === 'constraints.depend',
         ));
         self::assertCount(1, $migrationIssues);
@@ -356,7 +356,7 @@ final class ExtEmConfValidatorTest extends TestCase
             ),
         ));
 
-        $paths = array_map(static fn($i) => $i->path, $result->issues);
+        $paths = $result->issues->paths();
         self::assertContains('constraints.depend', $paths);
         self::assertContains('constraints.suggest', $paths);
         self::assertContains('constraints.conflict', $paths);
@@ -394,7 +394,7 @@ final class ExtEmConfValidatorTest extends TestCase
         ));
 
         $collisionIssues = array_values(array_filter(
-            $result->issues,
+            $result->issues->all(),
             static fn($i) => $i->path === 'constraints.depend.typo3',
         ));
         self::assertCount(1, $collisionIssues);
@@ -427,7 +427,7 @@ final class ExtEmConfValidatorTest extends TestCase
         ));
 
         $perEntry = array_filter(
-            $result->issues,
+            $result->issues->all(),
             static fn($i) => str_starts_with($i->path, 'constraints.depend.'),
         );
         self::assertEmpty($perEntry);
@@ -443,8 +443,8 @@ final class ExtEmConfValidatorTest extends TestCase
             authorEmail: 'not-an-email',
         ));
 
-        $errors = array_filter($result->issues, static fn($i) => $i->severity === IssueSeverity::ERROR);
-        $warnings = array_filter($result->issues, static fn($i) => $i->severity === IssueSeverity::WARNING);
+        $errors = array_filter($result->issues->all(), static fn($i) => $i->severity === IssueSeverity::ERROR);
+        $warnings = array_filter($result->issues->all(), static fn($i) => $i->severity === IssueSeverity::WARNING);
 
         self::assertNotEmpty($errors);
         self::assertNotEmpty($warnings);

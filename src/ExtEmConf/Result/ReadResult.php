@@ -17,19 +17,14 @@ use Packwright\ExtEmConf\Enum\ResultState;
  *
  * `$extEmConf` is `null` on `FAILURE`.
  *
- * @param list<Issue> $issues
- *
  * @internal not part of public API
  */
 final readonly class ReadResult
 {
-    /**
-     * @param list<Issue> $issues
-     */
     public function __construct(
         public ResultState $state,
         public ?ExtEmConf $extEmConf,
-        public array $issues = [],
+        public IssueCollection $issues = new IssueCollection(),
     ) {}
 
     public function isSuccess(): bool
@@ -39,6 +34,6 @@ final readonly class ReadResult
 
     public function hasIssues(): bool
     {
-        return $this->issues !== [];
+        return !$this->issues->isEmpty();
     }
 }

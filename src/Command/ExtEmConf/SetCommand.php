@@ -268,7 +268,7 @@ final class SetCommand extends Command
             return [
                 'file' => $file,
                 'state' => ResultState::FAILURE,
-                'issues' => $readResult->issues,
+                'issues' => $readResult->issues->all(),
                 'action' => Action::SKIPPED,
                 'generated' => null,
             ];
@@ -288,7 +288,7 @@ final class SetCommand extends Command
             return [
                 'file' => $file,
                 'state' => $validation->state,
-                'issues' => $validation->issues,
+                'issues' => $validation->issues->all(),
                 'action' => Action::SKIPPED,
                 'generated' => null,
             ];
@@ -300,7 +300,7 @@ final class SetCommand extends Command
             return [
                 'file' => $file,
                 'state' => $validation->state,
-                'issues' => $validation->issues,
+                'issues' => $validation->issues->all(),
                 'action' => Action::UNCHANGED,
                 'generated' => $generated,
             ];
@@ -310,7 +310,7 @@ final class SetCommand extends Command
             return [
                 'file' => $file,
                 'state' => $validation->state,
-                'issues' => $validation->issues,
+                'issues' => $validation->issues->all(),
                 'action' => Action::DRY_RUN,
                 'generated' => $generated,
             ];
@@ -321,7 +321,7 @@ final class SetCommand extends Command
         return [
             'file' => $file,
             'state' => $validation->state,
-            'issues' => $validation->issues,
+            'issues' => $validation->issues->all(),
             'action' => Action::WRITTEN,
             'generated' => $generated,
         ];

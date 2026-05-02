@@ -134,7 +134,7 @@ final class NormalizeCommand extends Command
                 'file' => $file,
                 'state' => ResultState::FAILURE,
                 'hasChanges' => false,
-                'droppedItems' => $readResult->issues,
+                'droppedItems' => $readResult->issues->all(),
                 'action' => Action::SKIPPED,
                 'generated' => null,
             ];
@@ -147,7 +147,7 @@ final class NormalizeCommand extends Command
                 'file' => $file,
                 'state' => ResultState::FAILURE,
                 'hasChanges' => $normalization->hasChanges,
-                'droppedItems' => $normalization->droppedItems,
+                'droppedItems' => $normalization->droppedItems->all(),
                 'action' => Action::SKIPPED,
                 'generated' => null,
             ];
@@ -160,7 +160,7 @@ final class NormalizeCommand extends Command
                 'file' => $file,
                 'state' => $normalization->state,
                 'hasChanges' => false,
-                'droppedItems' => $normalization->droppedItems,
+                'droppedItems' => $normalization->droppedItems->all(),
                 'action' => Action::UNCHANGED,
                 'generated' => $generated,
             ];
@@ -171,7 +171,7 @@ final class NormalizeCommand extends Command
                 'file' => $file,
                 'state' => $normalization->state,
                 'hasChanges' => true,
-                'droppedItems' => $normalization->droppedItems,
+                'droppedItems' => $normalization->droppedItems->all(),
                 'action' => Action::DRY_RUN,
                 'generated' => $generated,
             ];
@@ -183,7 +183,7 @@ final class NormalizeCommand extends Command
             'file' => $file,
             'state' => $normalization->state,
             'hasChanges' => true,
-            'droppedItems' => $normalization->droppedItems,
+            'droppedItems' => $normalization->droppedItems->all(),
             'action' => Action::WRITTEN,
             'generated' => $generated,
         ];

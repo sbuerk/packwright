@@ -133,12 +133,12 @@ final class ValidateCommand extends Command
             return [
                 'file' => $file,
                 'state' => ResultState::FAILURE,
-                'issues' => $readResult->issues,
+                'issues' => $readResult->issues->all(),
             ];
         }
 
         $validation = $this->validator->validate($readResult->extEmConf, $version);
-        $issues = array_merge($readResult->issues, $validation->issues);
+        $issues = array_merge($readResult->issues->all(), $validation->issues->all());
         $state = $this->worstState($readResult->state, $validation->state);
 
         return [

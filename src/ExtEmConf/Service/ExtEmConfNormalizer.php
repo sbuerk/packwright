@@ -13,6 +13,7 @@ use Packwright\ExtEmConf\Enum\ResultState;
 use Packwright\ExtEmConf\Enum\State;
 use Packwright\ExtEmConf\Enum\Typo3Version;
 use Packwright\ExtEmConf\Result\Issue;
+use Packwright\ExtEmConf\Result\IssueCollection;
 use Packwright\ExtEmConf\Result\NormalizationResult;
 
 /**
@@ -75,7 +76,7 @@ final class ExtEmConfNormalizer
             state: ResultState::SUCCESS,
             extEmConf: $normalized,
             hasChanges: $droppedItems !== [],
-            droppedItems: $droppedItems,
+            droppedItems: new IssueCollection($droppedItems),
         );
     }
 

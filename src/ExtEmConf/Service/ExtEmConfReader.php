@@ -22,6 +22,7 @@ use Packwright\ExtEmConf\Enum\IssueSeverity;
 use Packwright\ExtEmConf\Enum\ResultState;
 use Packwright\ExtEmConf\Enum\State;
 use Packwright\ExtEmConf\Result\Issue;
+use Packwright\ExtEmConf\Result\IssueCollection;
 use Packwright\ExtEmConf\Result\ReadResult;
 
 /**
@@ -81,13 +82,13 @@ final class ExtEmConfReader
             return new ReadResult(
                 state: ResultState::FAILURE,
                 extEmConf: null,
-                issues: [
+                issues: new IssueCollection([
                     new Issue(
                         path: '',
                         message: sprintf('Failed to load or parse "%s".', $filePath),
                         severity: IssueSeverity::ERROR,
                     ),
-                ],
+                ]),
             );
         }
 
@@ -104,7 +105,7 @@ final class ExtEmConfReader
             $state = ResultState::WARNING;
         }
 
-        return new ReadResult(state: $state, extEmConf: $extEmConf, issues: $issues);
+        return new ReadResult(state: $state, extEmConf: $extEmConf, issues: new IssueCollection($issues));
     }
 
     /**

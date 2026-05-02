@@ -22,7 +22,7 @@ final class ExtEmConfReaderTest extends TestCase
 
         self::assertSame(ResultState::FAILURE, $result->state);
         self::assertNull($result->extEmConf);
-        self::assertNotEmpty($result->issues);
+        self::assertFalse($result->issues->isEmpty());
     }
 
     #[Test]
@@ -94,7 +94,7 @@ final class ExtEmConfReaderTest extends TestCase
     {
         $result = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/invalid_keys/ext_emconf.php');
 
-        $issuePaths = array_map(static fn($i) => $i->path, $result->issues);
+        $issuePaths = $result->issues->paths();
         self::assertContains('unknown_custom_key', $issuePaths);
         self::assertContains('another_unknown', $issuePaths);
     }
@@ -107,7 +107,7 @@ final class ExtEmConfReaderTest extends TestCase
         self::assertNotNull($result->extEmConf);
         self::assertSame('totally_made_up_state', $result->extEmConf->state);
         self::assertSame(ResultState::SUCCESS, $result->state);
-        $statePaths = array_filter($result->issues, static fn($i) => $i->path === 'state');
+        $statePaths = array_filter($result->issues->all(), static fn($i) => $i->path === 'state');
         self::assertEmpty($statePaths);
     }
 
@@ -139,7 +139,7 @@ PHP);
             self::assertNotNull($result->extEmConf);
             self::assertSame('totally_unknown_category', $result->extEmConf->category);
             self::assertSame(ResultState::SUCCESS, $result->state);
-            $categoryPaths = array_filter($result->issues, static fn($i) => $i->path === 'category');
+            $categoryPaths = array_filter($result->issues->all(), static fn($i) => $i->path === 'category');
             self::assertEmpty($categoryPaths);
         } finally {
             @unlink($tempFile);
@@ -221,7 +221,7 @@ PHP);
     {
         $result = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/constraints_typo/ext_emconf.php');
 
-        $issuePaths = array_map(static fn($i) => $i->path, $result->issues);
+        $issuePaths = $result->issues->paths();
         self::assertContains('constraints.depend', $issuePaths);
         self::assertContains('constraints.suggest', $issuePaths);
         self::assertContains('constraints.conflict', $issuePaths);
@@ -232,7 +232,7 @@ PHP);
     {
         $result = (new ExtEmConfReader())->read(__DIR__ . '/../Fixtures/constraints_typo/ext_emconf.php');
 
-        $issuePaths = array_map(static fn($i) => $i->path, $result->issues);
+        $issuePaths = $result->issues->paths();
         self::assertContains('constraints.depend.broken', $issuePaths);
 
         $migratable = $result->extEmConf?->constraints->migratable['depend'] ?? null;

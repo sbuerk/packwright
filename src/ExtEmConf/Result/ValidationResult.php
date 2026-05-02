@@ -19,12 +19,9 @@ use Packwright\ExtEmConf\Enum\ResultState;
  */
 final readonly class ValidationResult
 {
-    /**
-     * @param list<Issue> $issues
-     */
     public function __construct(
         public ResultState $state,
-        public array $issues = [],
+        public IssueCollection $issues = new IssueCollection(),
     ) {}
 
     public function isValid(): bool
@@ -34,23 +31,11 @@ final readonly class ValidationResult
 
     public function hasErrors(): bool
     {
-        foreach ($this->issues as $issue) {
-            if ($issue->isError()) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->issues->hasErrors();
     }
 
     public function hasWarnings(): bool
     {
-        foreach ($this->issues as $issue) {
-            if ($issue->isWarning()) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->issues->hasWarnings();
     }
 }

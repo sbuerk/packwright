@@ -33,7 +33,7 @@ final class ExtEmConfNormalizerTest extends TestCase
         ));
 
         self::assertFalse($result->hasChanges);
-        self::assertEmpty($result->droppedItems);
+        self::assertTrue($result->droppedItems->isEmpty());
     }
 
     #[Test]
@@ -51,7 +51,7 @@ final class ExtEmConfNormalizerTest extends TestCase
         self::assertSame(Category::MISC, $result->extEmConf->category);
 
         $categoryIssues = array_values(array_filter(
-            $result->droppedItems,
+            $result->droppedItems->all(),
             static fn($i) => $i->path === 'category',
         ));
         self::assertCount(1, $categoryIssues);
@@ -73,7 +73,7 @@ final class ExtEmConfNormalizerTest extends TestCase
         self::assertSame(Category::MISC, $result->extEmConf->category);
 
         $categoryIssues = array_values(array_filter(
-            $result->droppedItems,
+            $result->droppedItems->all(),
             static fn($i) => $i->path === 'category',
         ));
         self::assertCount(1, $categoryIssues);
@@ -111,7 +111,7 @@ final class ExtEmConfNormalizerTest extends TestCase
         self::assertSame(State::BETA, $result->extEmConf->state);
 
         $stateIssues = array_values(array_filter(
-            $result->droppedItems,
+            $result->droppedItems->all(),
             static fn($i) => $i->path === 'state',
         ));
         self::assertCount(1, $stateIssues);
@@ -133,7 +133,7 @@ final class ExtEmConfNormalizerTest extends TestCase
         self::assertSame(State::BETA, $result->extEmConf->state);
 
         $stateIssues = array_values(array_filter(
-            $result->droppedItems,
+            $result->droppedItems->all(),
             static fn($i) => $i->path === 'state',
         ));
         self::assertCount(1, $stateIssues);
@@ -156,7 +156,7 @@ final class ExtEmConfNormalizerTest extends TestCase
         self::assertTrue($result->hasChanges);
         self::assertSame([], $result->extEmConf->unknownProperties);
 
-        $paths = array_map(static fn($i) => $i->path, $result->droppedItems);
+        $paths = $result->droppedItems->paths();
         self::assertContains('my_key', $paths);
         self::assertContains('another', $paths);
     }
@@ -179,7 +179,7 @@ final class ExtEmConfNormalizerTest extends TestCase
         self::assertTrue($result->hasChanges);
         self::assertNull($result->extEmConf->uploadfolder);
 
-        $paths = array_map(static fn($i) => $i->path, $result->droppedItems);
+        $paths = $result->droppedItems->paths();
         self::assertContains('uploadfolder', $paths);
     }
 
@@ -239,7 +239,7 @@ final class ExtEmConfNormalizerTest extends TestCase
         self::assertTrue($result->hasChanges);
         self::assertNull($result->extEmConf->clearCacheOnLoad);
 
-        $paths = array_map(static fn($i) => $i->path, $result->droppedItems);
+        $paths = $result->droppedItems->paths();
         self::assertContains('clearCacheOnLoad', $paths);
     }
 
@@ -317,14 +317,14 @@ final class ExtEmConfNormalizerTest extends TestCase
         self::assertSame('', $result->extEmConf->description);
         self::assertSame('', $result->extEmConf->version);
 
-        $paths = array_map(static fn($i) => $i->path, $result->droppedItems);
+        $paths = $result->droppedItems->paths();
         self::assertContains('title', $paths);
         self::assertContains('description', $paths);
         self::assertContains('version', $paths);
 
         foreach (['title', 'description', 'version'] as $field) {
             $matches = array_values(array_filter(
-                $result->droppedItems,
+                $result->droppedItems->all(),
                 static fn($i) => $i->path === $field,
             ));
             self::assertCount(1, $matches);
@@ -344,7 +344,7 @@ final class ExtEmConfNormalizerTest extends TestCase
         ));
 
         self::assertTrue($result->hasChanges);
-        $paths = array_map(static fn($i) => $i->path, $result->droppedItems);
+        $paths = $result->droppedItems->paths();
         self::assertContains('description', $paths);
         self::assertNotContains('title', $paths);
         self::assertNotContains('version', $paths);
@@ -384,7 +384,7 @@ final class ExtEmConfNormalizerTest extends TestCase
         self::assertArrayHasKey('php', $depends);
 
         $migratedIssue = array_values(array_filter(
-            $result->droppedItems,
+            $result->droppedItems->all(),
             static fn($i) => $i->path === 'constraints.depends.php',
         ));
         self::assertCount(1, $migratedIssue);
@@ -457,7 +457,7 @@ final class ExtEmConfNormalizerTest extends TestCase
         self::assertSame($canonicalDep, $depends['typo3']);
 
         $skipIssue = array_values(array_filter(
-            $result->droppedItems,
+            $result->droppedItems->all(),
             static fn($i) => $i->path === 'constraints.depend.typo3',
         ));
         self::assertCount(1, $skipIssue);
@@ -465,7 +465,7 @@ final class ExtEmConfNormalizerTest extends TestCase
         self::assertStringContainsString('depends.typo3', $skipIssue[0]->message);
 
         $migrationPath = array_filter(
-            $result->droppedItems,
+            $result->droppedItems->all(),
             static fn($i) => $i->path === 'constraints.depends.typo3',
         );
         self::assertEmpty($migrationPath);
@@ -488,7 +488,7 @@ final class ExtEmConfNormalizerTest extends TestCase
         ));
 
         $migrationItems = array_filter(
-            $result->droppedItems,
+            $result->droppedItems->all(),
             static fn($i) => str_starts_with($i->path, 'constraints.'),
         );
         self::assertEmpty($migrationItems);

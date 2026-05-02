@@ -10,6 +10,7 @@ use Packwright\ExtEmConf\Enum\IssueSeverity;
 use Packwright\ExtEmConf\Enum\ResultState;
 use Packwright\ExtEmConf\Enum\Typo3Version;
 use Packwright\ExtEmConf\Result\Issue;
+use Packwright\ExtEmConf\Result\IssueCollection;
 use Packwright\ExtEmConf\Result\ValidationResult;
 
 /**
@@ -50,7 +51,7 @@ final class ExtEmConfValidator
             $state = ResultState::WARNING;
         }
 
-        return new ValidationResult(state: $state, issues: $issues);
+        return new ValidationResult(state: $state, issues: new IssueCollection($issues));
     }
 
     /**
