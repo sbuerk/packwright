@@ -1,0 +1,10 @@
+{
+    "name": "vendor/v13-full-with-composer",
+    "type": "typo3-cms-extension",
+    "description": "Full v13 fixture with sibling composer.json.",
+    "extra": {
+        "typo3/cms": {
+            "extension-key": "v13_full_with_composer"
+        }
+    }
+}

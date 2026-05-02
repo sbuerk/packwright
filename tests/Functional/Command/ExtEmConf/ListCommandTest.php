@@ -249,4 +249,170 @@ final class ListCommandTest extends TestCase
 
         self::assertSame(Command::INVALID, $exitCode);
     }
+
+    #[Test]
+    public function tableContainsExtractedComposerColumnsForFixtureWithSiblingComposer(): void
+    {
+        $fixture = dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/v13_full_with_composer/ext_emconf.php';
+
+        $kernel = new Kernel(dirname(__DIR__, 4));
+        /** @var Application $application */
+        $application = $kernel->createContainer()->get(Application::class);
+        $tester = new CommandTester($application->find('extemconf:list'));
+
+        $tester->execute(['paths' => [$fixture]]);
+
+        $display = $tester->getDisplay();
+        self::assertStringContainsString('v13_full_with_composer', $display);
+        self::assertStringContainsString('vendor/v13-full-with-composer', $display);
+        self::assertStringContainsString('typo3-cms-extension', $display);
+        self::assertStringContainsString('Extension Key', $display);
+        self::assertStringContainsString('Package Name', $display);
+        self::assertStringContainsString('Package Type', $display);
+    }
+
+    #[Test]
+    public function jsonContainsComposerBlockAlongsideDataAndValidation(): void
+    {
+        $fixture = dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/v13_full_with_composer/ext_emconf.php';
+
+        $kernel = new Kernel(dirname(__DIR__, 4));
+        /** @var Application $application */
+        $application = $kernel->createContainer()->get(Application::class);
+        $tester = new CommandTester($application->find('extemconf:list'));
+
+        $tester->execute(['paths' => [$fixture], '--json' => true]);
+
+        $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
+
+        $expectedKey = realpath($fixture);
+        self::assertNotFalse($expectedKey);
+        $entry = $payload[$expectedKey];
+        self::assertIsArray($entry);
+        self::assertArrayHasKey('composer', $entry);
+        self::assertArrayHasKey('data', $entry);
+        self::assertArrayHasKey('validation', $entry);
+
+        self::assertSame(
+            [
+                'extensionKey' => 'v13_full_with_composer',
+                'packageName' => 'vendor/v13-full-with-composer',
+                'packageType' => 'typo3-cms-extension',
+                'packageDescription' => 'Full v13 fixture with sibling composer.json.',
+            ],
+            $entry['composer'],
+        );
+    }
+
+    #[Test]
+    public function jsonComposerFieldsAreEmptyStringsWhenSiblingComposerIsMissing(): void
+    {
+        $fixture = dirname(__DIR__, 2) . '/ExtEmConf/Fixtures/v13_full/ext_emconf.php';
+
+        $kernel = new Kernel(dirname(__DIR__, 4));
+        /** @var Application $application */
+        $application = $kernel->createContainer()->get(Application::class);
+        $tester = new CommandTester($application->find('extemconf:list'));
+
+        $tester->execute(['paths' => [$fixture], '--json' => true]);
+
+        $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
+        $entry = $payload[(string)realpath($fixture)];
+
+        self::assertSame(
+            [
+                'extensionKey' => '',
+                'packageName' => '',
+                'packageType' => '',
+                'packageDescription' => '',
+            ],
+            $entry['composer'],
+        );
+        self::assertSame('SUCCESS', $entry['validation']['state']);
+    }
+
+    #[Test]
+    public function jsonContainsComposerBlockEvenWhenExtEmConfFailsToParse(): void
+    {
+        $dir = sys_get_temp_dir() . '/packwright_list_broken_' . bin2hex(random_bytes(6));
+        mkdir($dir);
+        $extEmConf = $dir . '/ext_emconf.php';
+        $composer = $dir . '/composer.json';
+        file_put_contents($extEmConf, '<?php this is not valid PHP');
+        file_put_contents($composer, json_encode([
+            'name' => 'vendor/broken-emconf',
+            'type' => 'typo3-cms-extension',
+            'description' => 'Composer side is fine; ext_emconf.php is broken.',
+            'extra' => ['typo3/cms' => ['extension-key' => 'broken_emconf']],
+        ], JSON_THROW_ON_ERROR));
+
+        try {
+            $kernel = new Kernel(dirname(__DIR__, 4));
+            /** @var Application $application */
+            $application = $kernel->createContainer()->get(Application::class);
+            $tester = new CommandTester($application->find('extemconf:list'));
+
+            $tester->execute(['paths' => [$extEmConf], '--json' => true]);
+
+            $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+            self::assertIsArray($payload);
+            $entry = $payload[$extEmConf];
+            self::assertNull($entry['data']);
+            self::assertSame('FAILURE', $entry['validation']['state']);
+            self::assertSame('vendor/broken-emconf', $entry['composer']['packageName']);
+            self::assertSame('broken_emconf', $entry['composer']['extensionKey']);
+            self::assertSame('typo3-cms-extension', $entry['composer']['packageType']);
+        } finally {
+            @unlink($composer);
+            @unlink($extEmConf);
+            @rmdir($dir);
+        }
+    }
+
+    #[Test]
+    public function jsonComposerFieldsAreEmptyAndValidationStaysSuccessOnMalformedComposerJson(): void
+    {
+        $dir = sys_get_temp_dir() . '/packwright_list_malformed_' . bin2hex(random_bytes(6));
+        mkdir($dir);
+        $extEmConf = $dir . '/ext_emconf.php';
+        $composer = $dir . '/composer.json';
+        file_put_contents($extEmConf, "<?php\n\n\$EM_CONF[\$_EXTKEY] = [\n"
+            . "    'title' => 'Malformed Composer Sibling',\n"
+            . "    'description' => 'Valid ext_emconf with malformed composer.json next to it.',\n"
+            . "    'version' => '0.1.0',\n"
+            . "    'category' => 'misc',\n"
+            . "    'state' => 'beta',\n"
+            . "];\n");
+        file_put_contents($composer, '{ "name": ');
+
+        try {
+            $kernel = new Kernel(dirname(__DIR__, 4));
+            /** @var Application $application */
+            $application = $kernel->createContainer()->get(Application::class);
+            $tester = new CommandTester($application->find('extemconf:list'));
+
+            $strictExit = $tester->execute(['paths' => [$extEmConf], '--json' => true, '--strict' => true]);
+
+            self::assertSame(Command::SUCCESS, $strictExit);
+            $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+            self::assertIsArray($payload);
+            $entry = $payload[$extEmConf];
+            self::assertSame(
+                [
+                    'extensionKey' => '',
+                    'packageName' => '',
+                    'packageType' => '',
+                    'packageDescription' => '',
+                ],
+                $entry['composer'],
+            );
+            self::assertSame('SUCCESS', $entry['validation']['state']);
+        } finally {
+            @unlink($composer);
+            @unlink($extEmConf);
+            @rmdir($dir);
+        }
+    }
 }
