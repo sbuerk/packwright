@@ -97,7 +97,8 @@ fails to parse, so a broken `ext_emconf.php` next to a healthy
 ### JSON shape
 
 The top-level value is an object whose keys are the absolute folder
-paths containing each `ext_emconf.php`. Each entry exposes the
+paths containing each `ext_emconf.php`. Each entry repeats that
+folder as `path` for uniform `.value.path` access, exposes the
 absolute file paths explicitly via `file` and `composerFile`,
 followed by the parsed `ext_emconf` data, the extracted composer
 metadata, and a validation block:
@@ -105,6 +106,7 @@ metadata, and a validation block:
 ```json
 {
   "/abs/path/my_ext": {
+    "path": "/abs/path/my_ext",
     "file": "/abs/path/my_ext/ext_emconf.php",
     "composerFile": "/abs/path/my_ext/composer.json",
     "data": {
@@ -142,6 +144,7 @@ metadata, and a validation block:
     }
   },
   "/abs/path/broken": {
+    "path": "/abs/path/broken",
     "file": "/abs/path/broken/ext_emconf.php",
     "composerFile": "",
     "data": null,
@@ -162,11 +165,13 @@ metadata, and a validation block:
 }
 ```
 
-`file` is the absolute path to the discovered `ext_emconf.php`, or
-the empty string if the file does not exist (or vanished between
-discovery and read). `composerFile` is the absolute path to the
-sibling `composer.json` in the same folder, or the empty string when
-no readable file exists at that location.
+`path` is the absolute folder path (identical to the entry's object
+key), or the empty string when the discovered `ext_emconf.php` does
+not exist at render time. `file` is the absolute path to the
+discovered `ext_emconf.php`, or the empty string under the same
+condition. `composerFile` is the absolute path to the sibling
+`composer.json` in the same folder, or the empty string when no
+readable file exists at that location.
 
 `data` is `null` for files that failed to read; `isValid` is `false`
 exactly when `state` is `FAILURE` (warnings still count as valid).
@@ -175,13 +180,17 @@ there is no readable sibling `composer.json` or when individual keys
 are missing).
 
 The keyed-by-folder shape is designed for `jq` iteration. Use
-`.value.file` to recover the `ext_emconf.php` path inside each
-entry. Examples:
+`.value.path` to recover the folder and `.value.file` to recover
+the `ext_emconf.php` path inside each entry. Examples:
 
 ```sh
 # List every file that failed to parse:
 pkw extemconf:list 'packages/**/ext_emconf.php' --json \
   | jq -r 'to_entries[] | select(.value.validation.state == "FAILURE") | .value.file'
+
+# Print "<folder>: <title>" using the new path field:
+pkw extemconf:list 'packages/**/ext_emconf.php' --json \
+  | jq -r 'to_entries[] | "\(.value.path): \(.value.data.title // "-")"'
 
 # Print "<path>: <title> <version>" for each file:
 pkw extemconf:list 'packages/**/ext_emconf.php' --json \
