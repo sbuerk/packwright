@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Packwright\Command\ExtEmConf;
 
+use Packwright\Console\Concern\Typo3VersionOption;
 use Packwright\Console\DisplayPathFormatter;
 use Packwright\ExtEmConf\Enum\IssueSeverity;
 use Packwright\ExtEmConf\Enum\ResultState;
@@ -27,6 +28,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 )]
 final class ValidateCommand extends Command
 {
+    use Typo3VersionOption;
+
     public function __construct(
         private readonly PathResolver $pathResolver,
         private readonly ExtEmConfReader $reader,
@@ -45,12 +48,6 @@ final class ValidateCommand extends Command
                 description: 'File paths, directories, or glob patterns pointing to ext_emconf.php files.',
             )
             ->addOption(
-                name: 'typo3-version',
-                shortcut: 't',
-                mode: InputOption::VALUE_REQUIRED,
-                description: 'TYPO3 major version to validate against (8, 9, 10, 11, 12, 13).',
-            )
-            ->addOption(
                 name: 'json',
                 mode: InputOption::VALUE_NONE,
                 description: 'Output a JSON document instead of a table.',
@@ -60,13 +57,15 @@ final class ValidateCommand extends Command
                 mode: InputOption::VALUE_NONE,
                 description: 'Exit with code 1 when any file ends in WARNING state.',
             );
+
+        $this->configureTypo3VersionOption('validate');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $stderr = $output instanceof ConsoleOutputInterface ? $output->getErrorOutput() : $output;
 
-        $version = $this->parseVersion($input->getOption('typo3-version'));
+        $version = $this->parseTypo3VersionOption($input);
         if ($version === false) {
             $stderr->writeln(sprintf(
                 '<error>Invalid TYPO3 version "%s". Allowed: 8, 9, 10, 11, 12, 13.</error>',
@@ -147,22 +146,6 @@ final class ValidateCommand extends Command
             'state' => $state,
             'issues' => array_values($issues),
         ];
-    }
-
-    private function parseVersion(mixed $raw): false|Typo3Version|null
-    {
-        if ($raw === null || $raw === '') {
-            return null;
-        }
-        if (!is_string($raw) && !is_int($raw)) {
-            return false;
-        }
-        $stringValue = (string)$raw;
-        if (!ctype_digit($stringValue)) {
-            return false;
-        }
-
-        return Typo3Version::tryFrom((int)$stringValue) ?? false;
     }
 
     private function worstState(ResultState $a, ResultState $b): ResultState

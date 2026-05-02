@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Packwright\Command\ExtEmConf;
 
+use Packwright\Console\Concern\Typo3VersionOption;
 use Packwright\Console\DisplayPathFormatter;
 use Packwright\ExtEmConf\Enum\ResultState;
 use Packwright\ExtEmConf\Enum\Typo3Version;
@@ -27,10 +28,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 )]
 final class NormalizeCommand extends Command
 {
-    private const ACTION_WRITTEN = 'written';
-    private const ACTION_DRY_RUN = 'dry-run';
-    private const ACTION_UNCHANGED = 'unchanged';
-    private const ACTION_SKIPPED = 'skipped';
+    use Typo3VersionOption;
 
     public function __construct(
         private readonly PathResolver $pathResolver,
@@ -51,12 +49,6 @@ final class NormalizeCommand extends Command
                 description: 'File paths, directories, or glob patterns pointing to ext_emconf.php files.',
             )
             ->addOption(
-                name: 'typo3-version',
-                shortcut: 't',
-                mode: InputOption::VALUE_REQUIRED,
-                description: 'TYPO3 major version to normalize for (8, 9, 10, 11, 12, 13).',
-            )
-            ->addOption(
                 name: 'dry-run',
                 mode: InputOption::VALUE_NONE,
                 description: 'Do not write files; only report what would change.',
@@ -66,13 +58,15 @@ final class NormalizeCommand extends Command
                 mode: InputOption::VALUE_NONE,
                 description: 'Output a JSON document instead of a table.',
             );
+
+        $this->configureTypo3VersionOption('normalize for');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $stderr = $output instanceof ConsoleOutputInterface ? $output->getErrorOutput() : $output;
 
-        $version = $this->parseVersion($input->getOption('typo3-version'));
+        $version = $this->parseTypo3VersionOption($input);
         if ($version === false) {
             $stderr->writeln(sprintf(
                 '<error>Invalid TYPO3 version "%s". Allowed: 8, 9, 10, 11, 12, 13.</error>',
@@ -128,7 +122,7 @@ final class NormalizeCommand extends Command
      *     state: ResultState,
      *     hasChanges: bool,
      *     droppedItems: list<Issue>,
-     *     action: string,
+     *     action: Action,
      *     generated: ?string,
      * }
      */
@@ -141,7 +135,7 @@ final class NormalizeCommand extends Command
                 'state' => ResultState::FAILURE,
                 'hasChanges' => false,
                 'droppedItems' => $readResult->issues,
-                'action' => self::ACTION_SKIPPED,
+                'action' => Action::SKIPPED,
                 'generated' => null,
             ];
         }
@@ -154,7 +148,7 @@ final class NormalizeCommand extends Command
                 'state' => ResultState::FAILURE,
                 'hasChanges' => $normalization->hasChanges,
                 'droppedItems' => $normalization->droppedItems,
-                'action' => self::ACTION_SKIPPED,
+                'action' => Action::SKIPPED,
                 'generated' => null,
             ];
         }
@@ -167,7 +161,7 @@ final class NormalizeCommand extends Command
                 'state' => $normalization->state,
                 'hasChanges' => false,
                 'droppedItems' => $normalization->droppedItems,
-                'action' => self::ACTION_UNCHANGED,
+                'action' => Action::UNCHANGED,
                 'generated' => $generated,
             ];
         }
@@ -178,7 +172,7 @@ final class NormalizeCommand extends Command
                 'state' => $normalization->state,
                 'hasChanges' => true,
                 'droppedItems' => $normalization->droppedItems,
-                'action' => self::ACTION_DRY_RUN,
+                'action' => Action::DRY_RUN,
                 'generated' => $generated,
             ];
         }
@@ -190,29 +184,13 @@ final class NormalizeCommand extends Command
             'state' => $normalization->state,
             'hasChanges' => true,
             'droppedItems' => $normalization->droppedItems,
-            'action' => self::ACTION_WRITTEN,
+            'action' => Action::WRITTEN,
             'generated' => $generated,
         ];
     }
 
-    private function parseVersion(mixed $raw): false|Typo3Version|null
-    {
-        if ($raw === null || $raw === '') {
-            return null;
-        }
-        if (!is_string($raw) && !is_int($raw)) {
-            return false;
-        }
-        $stringValue = (string)$raw;
-        if (!ctype_digit($stringValue)) {
-            return false;
-        }
-
-        return Typo3Version::tryFrom((int)$stringValue) ?? false;
-    }
-
     /**
-     * @param list<array{file: string, state: ResultState, hasChanges: bool, droppedItems: list<Issue>, action: string, generated: ?string}> $rows
+     * @param list<array{file: string, state: ResultState, hasChanges: bool, droppedItems: list<Issue>, action: Action, generated: ?string}> $rows
      */
     private function renderTable(array $rows, ?Typo3Version $version, OutputInterface $output): void
     {
@@ -228,7 +206,7 @@ final class NormalizeCommand extends Command
                 $this->stateLabel($row['state']),
                 $row['hasChanges'] ? 'yes' : 'no',
                 (string)count($row['droppedItems']),
-                $row['action'],
+                $row['action']->label(),
             ]);
         }
 
@@ -251,7 +229,7 @@ final class NormalizeCommand extends Command
     }
 
     /**
-     * @param list<array{file: string, state: ResultState, hasChanges: bool, droppedItems: list<Issue>, action: string, generated: ?string}> $rows
+     * @param list<array{file: string, state: ResultState, hasChanges: bool, droppedItems: list<Issue>, action: Action, generated: ?string}> $rows
      */
     private function renderDroppedDetails(array $rows, OutputInterface $output): void
     {
@@ -273,7 +251,7 @@ final class NormalizeCommand extends Command
     }
 
     /**
-     * @param list<array{file: string, state: ResultState, hasChanges: bool, droppedItems: list<Issue>, action: string, generated: ?string}> $rows
+     * @param list<array{file: string, state: ResultState, hasChanges: bool, droppedItems: list<Issue>, action: Action, generated: ?string}> $rows
      */
     private function renderJson(array $rows, ?Typo3Version $version, bool $dryRun): string
     {
@@ -300,7 +278,7 @@ final class NormalizeCommand extends Command
                     ],
                     $row['droppedItems'],
                 ),
-                'action' => $row['action'],
+                'action' => $row['action']->label(),
                 'generated' => $row['generated'],
             ];
 
@@ -321,13 +299,13 @@ final class NormalizeCommand extends Command
         return (string)json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     }
 
-    private function summaryKey(string $action): string
+    private function summaryKey(Action $action): string
     {
         return match ($action) {
-            self::ACTION_WRITTEN => 'written',
-            self::ACTION_DRY_RUN => 'dryRun',
-            self::ACTION_UNCHANGED => 'unchanged',
-            default => 'skipped',
+            Action::WRITTEN => 'written',
+            Action::DRY_RUN => 'dryRun',
+            Action::UNCHANGED => 'unchanged',
+            Action::SKIPPED => 'skipped',
         };
     }
 
