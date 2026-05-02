@@ -59,7 +59,7 @@ final class ListCommand extends Command
                 description: 'Exit with code 1 when any listed file ends in WARNING or FAILURE state.',
             );
 
-        $this->configureTypo3VersionOption('validate against');
+        $this->configureTypo3VersionOption('validate');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
