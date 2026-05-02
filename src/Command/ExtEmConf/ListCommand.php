@@ -6,6 +6,7 @@ namespace Packwright\Command\ExtEmConf;
 
 use Packwright\Console\Concern\Typo3VersionOption;
 use Packwright\Console\DisplayPathFormatter;
+use Packwright\ExtEmConf\Dto\Composer\SiblingComposerInfo;
 use Packwright\ExtEmConf\Enum\ResultState;
 use Packwright\ExtEmConf\Enum\Typo3Version;
 use Packwright\ExtEmConf\Result\Issue;
@@ -13,6 +14,7 @@ use Packwright\ExtEmConf\Service\ExtEmConfArraySerializer;
 use Packwright\ExtEmConf\Service\ExtEmConfReader;
 use Packwright\ExtEmConf\Service\ExtEmConfValidator;
 use Packwright\ExtEmConf\Service\PathResolver;
+use Packwright\ExtEmConf\Service\SiblingComposerReader;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
@@ -36,6 +38,7 @@ final class ListCommand extends Command
         private readonly ExtEmConfValidator $validator,
         private readonly DisplayPathFormatter $displayPath,
         private readonly ExtEmConfArraySerializer $serializer,
+        private readonly SiblingComposerReader $composerReader,
     ) {
         parent::__construct();
     }
@@ -123,10 +126,12 @@ final class ListCommand extends Command
     }
 
     /**
-     * @return array{file: string, title: string, version: string, state: ResultState, issues: list<Issue>, data: ?array<string, mixed>}
+     * @return array{file: string, title: string, version: string, state: ResultState, issues: list<Issue>, data: ?array<string, mixed>, composer: SiblingComposerInfo}
      */
     private function processFile(string $file, ?Typo3Version $version): array
     {
+        $composer = $this->composerReader->read($file);
+
         $readResult = $this->reader->read($file);
         if ($readResult->extEmConf === null) {
             return [
@@ -136,6 +141,7 @@ final class ListCommand extends Command
                 'state' => ResultState::FAILURE,
                 'issues' => $readResult->issues->all(),
                 'data' => null,
+                'composer' => $composer,
             ];
         }
 
@@ -150,6 +156,7 @@ final class ListCommand extends Command
             'state' => $state,
             'issues' => array_values($issues),
             'data' => $this->serializer->serialize($readResult->extEmConf),
+            'composer' => $composer,
         ];
     }
 
@@ -165,16 +172,28 @@ final class ListCommand extends Command
     }
 
     /**
-     * @param list<array{file: string, title: string, version: string, state: ResultState, issues: list<Issue>, data: ?array<string, mixed>}> $rows
+     * @param list<array{file: string, title: string, version: string, state: ResultState, issues: list<Issue>, data: ?array<string, mixed>, composer: SiblingComposerInfo}> $rows
      */
     private function renderTable(array $rows, OutputInterface $output): void
     {
         $table = new Table($output);
-        $table->setHeaders(['Path', 'Title', 'Version', 'State', 'Issues']);
+        $table->setHeaders([
+            'Path',
+            'Extension Key',
+            'Package Name',
+            'Package Type',
+            'Title',
+            'Version',
+            'State',
+            'Issues',
+        ]);
 
         foreach ($rows as $row) {
             $table->addRow([
                 $this->displayPath->format($row['file']),
+                $row['composer']->extensionKey,
+                $row['composer']->packageName,
+                $row['composer']->packageType,
                 $row['title'],
                 $row['version'],
                 $this->stateLabel($row['state']),
@@ -186,7 +205,7 @@ final class ListCommand extends Command
     }
 
     /**
-     * @param list<array{file: string, title: string, version: string, state: ResultState, issues: list<Issue>, data: ?array<string, mixed>}> $rows
+     * @param list<array{file: string, title: string, version: string, state: ResultState, issues: list<Issue>, data: ?array<string, mixed>, composer: SiblingComposerInfo}> $rows
      */
     private function renderJson(array $rows): string
     {
@@ -194,6 +213,12 @@ final class ListCommand extends Command
         foreach ($rows as $row) {
             $payload[$row['file']] = [
                 'data' => $row['data'],
+                'composer' => [
+                    'extensionKey' => $row['composer']->extensionKey,
+                    'packageName' => $row['composer']->packageName,
+                    'packageType' => $row['composer']->packageType,
+                    'packageDescription' => $row['composer']->packageDescription,
+                ],
                 'validation' => [
                     'state' => $row['state']->name,
                     'isValid' => $row['state'] !== ResultState::FAILURE,
