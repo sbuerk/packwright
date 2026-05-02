@@ -296,11 +296,8 @@ final class SetCommand extends Command
             if ($candidate === $type) {
                 continue;
             }
-            $collection = $this->groupCollection($constraints, $candidate);
-            foreach ($collection as $extKey => $_dependency) {
-                if ($extKey === $extensionKey) {
-                    return $candidate;
-                }
+            if ($this->groupCollection($constraints, $candidate)->has($extensionKey)) {
+                return $candidate;
             }
         }
 

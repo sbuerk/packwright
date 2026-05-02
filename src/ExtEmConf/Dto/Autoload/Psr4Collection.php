@@ -54,4 +54,26 @@ final readonly class Psr4Collection implements \Countable, \IteratorAggregate
     {
         return $this->entries === [];
     }
+
+    public function has(string $namespace): bool
+    {
+        foreach ($this->entries as $entry) {
+            if ($entry->namespace === $namespace) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function get(string $namespace): ?Psr4Entry
+    {
+        foreach ($this->entries as $entry) {
+            if ($entry->namespace === $namespace) {
+                return $entry;
+            }
+        }
+
+        return null;
+    }
 }

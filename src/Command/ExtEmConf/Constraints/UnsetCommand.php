@@ -197,15 +197,7 @@ final class UnsetCommand extends Command
         $original = $readResult->extEmConf;
         $existing = $this->groupCollection($original->constraints, $type);
 
-        $hasEntry = false;
-        foreach ($existing as $extKey => $_dependency) {
-            if ($extKey === $extensionKey) {
-                $hasEntry = true;
-                break;
-            }
-        }
-
-        if (!$hasEntry) {
+        if (!$existing->has($extensionKey)) {
             return [
                 'file' => $file,
                 'state' => ResultState::SUCCESS,

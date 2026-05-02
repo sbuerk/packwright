@@ -384,10 +384,10 @@ final class ExtEmConfNormalizerTest extends TestCase
         self::assertTrue($result->hasChanges);
         self::assertTrue($result->extEmConf->constraints->migratable->isEmpty());
 
-        $depends = iterator_to_array($result->extEmConf->constraints->depends);
+        $depends = $result->extEmConf->constraints->depends;
         self::assertCount(2, $depends);
-        self::assertArrayHasKey('typo3', $depends);
-        self::assertArrayHasKey('php', $depends);
+        self::assertTrue($depends->has('typo3'));
+        self::assertTrue($depends->has('php'));
 
         $migratedIssue = array_values(array_filter(
             $result->droppedItems->all(),
@@ -458,9 +458,9 @@ final class ExtEmConfNormalizerTest extends TestCase
             ),
         ));
 
-        $depends = iterator_to_array($result->extEmConf->constraints->depends);
+        $depends = $result->extEmConf->constraints->depends;
         self::assertCount(1, $depends);
-        self::assertSame($canonicalDep, $depends['typo3']);
+        self::assertSame($canonicalDep, $depends->get('typo3'));
 
         $skipIssue = array_values(array_filter(
             $result->droppedItems->all(),

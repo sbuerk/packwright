@@ -67,13 +67,13 @@ final class ExtEmConfReaderTest extends TestCase
         self::assertCount(0, $result->extEmConf->constraints->conflicts);
         self::assertCount(1, $suggests);
 
-        $typo3Dep = iterator_to_array($depends)['typo3'] ?? null;
+        $typo3Dep = $depends->get('typo3');
         self::assertNotNull($typo3Dep);
         self::assertInstanceOf(VersionRange::class, $typo3Dep->version);
         self::assertSame('13.4.0', (string)$typo3Dep->version->lowest);
         self::assertSame('13.4.99', (string)$typo3Dep->version->highest);
 
-        $newsSug = iterator_to_array($suggests)['news'] ?? null;
+        $newsSug = $suggests->get('news');
         self::assertNotNull($newsSug);
         self::assertInstanceOf(AllVersions::class, $newsSug->version);
     }
@@ -197,7 +197,7 @@ PHP);
         self::assertCount(1, $migratable->suggest);
         self::assertCount(1, $migratable->conflict);
 
-        $phpDep = iterator_to_array($migratable->depend)['php'] ?? null;
+        $phpDep = $migratable->depend->get('php');
         self::assertNotNull($phpDep);
         self::assertInstanceOf(VersionRange::class, $phpDep->version);
     }
@@ -212,7 +212,7 @@ PHP);
         self::assertCount(0, $result->extEmConf->constraints->conflicts);
         self::assertCount(0, $result->extEmConf->constraints->suggests);
 
-        $typo3Dep = iterator_to_array($result->extEmConf->constraints->depends)['typo3'] ?? null;
+        $typo3Dep = $result->extEmConf->constraints->depends->get('typo3');
         self::assertNotNull($typo3Dep);
     }
 
@@ -237,7 +237,7 @@ PHP);
 
         $migratable = $result->extEmConf?->constraints->migratable->depend;
         self::assertNotNull($migratable);
-        $brokenDep = iterator_to_array($migratable)['broken'] ?? null;
+        $brokenDep = $migratable->get('broken');
         self::assertNotNull($brokenDep);
         self::assertInstanceOf(AllVersions::class, $brokenDep->version);
     }

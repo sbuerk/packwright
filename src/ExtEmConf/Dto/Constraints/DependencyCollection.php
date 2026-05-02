@@ -57,4 +57,26 @@ final readonly class DependencyCollection implements \Countable, \IteratorAggreg
     {
         return $this->dependencies === [];
     }
+
+    public function has(string $extensionKey): bool
+    {
+        foreach ($this->dependencies as $dependency) {
+            if ($dependency->extensionKey === $extensionKey) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function get(string $extensionKey): ?Dependency
+    {
+        foreach ($this->dependencies as $dependency) {
+            if ($dependency->extensionKey === $extensionKey) {
+                return $dependency;
+            }
+        }
+
+        return null;
+    }
 }

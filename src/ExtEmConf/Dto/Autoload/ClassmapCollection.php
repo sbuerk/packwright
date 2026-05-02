@@ -48,4 +48,26 @@ final readonly class ClassmapCollection implements \Countable, \IteratorAggregat
     {
         return $this->entries === [];
     }
+
+    public function has(string $path): bool
+    {
+        foreach ($this->entries as $entry) {
+            if ($entry->path === $path) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function get(string $path): ?ClassmapEntry
+    {
+        foreach ($this->entries as $entry) {
+            if ($entry->path === $path) {
+                return $entry;
+            }
+        }
+
+        return null;
+    }
 }
