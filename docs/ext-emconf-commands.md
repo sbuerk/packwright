@@ -55,17 +55,41 @@ packwright extemconf:list <paths...> [-t <version>] [--json] [--strict]
 Default (one row per file):
 
 ```
-+----------------------------------+--------------------+---------+---------+--------+
-| Path                             | Title              | Version | State   | Issues |
-+----------------------------------+--------------------+---------+---------+--------+
-| ./packages/my_ext/ext_emconf.php | My Extension       | 1.2.3   | SUCCESS | 0      |
-| /tmp/broken/ext_emconf.php       |                    |         | FAILURE | 1      |
-+----------------------------------+--------------------+---------+---------+--------+
++----------------------------------+---------------+----------------------+----------------------+--------------+---------+---------+--------+
+| Path                             | Extension Key | Package Name         | Package Type         | Title        | Version | State   | Issues |
++----------------------------------+---------------+----------------------+----------------------+--------------+---------+---------+--------+
+| ./packages/my_ext/ext_emconf.php | my_ext        | vendor/my_ext        | typo3-cms-extension  | My Extension | 1.2.3   | SUCCESS | 0      |
+| /tmp/broken/ext_emconf.php       | broken        | vendor/broken        | typo3-cms-extension  |              |         | FAILURE | 1      |
++----------------------------------+---------------+----------------------+----------------------+--------------+---------+---------+--------+
 ```
 
 Paths beneath the current working directory render relative (with a
 leading `./`); paths elsewhere render absolute. JSON output always
 emits absolute paths as object keys.
+
+### Sibling `composer.json`
+
+For every discovered `ext_emconf.php`, the command also reads the
+`composer.json` file in the same directory (if any) and extracts four
+inventory fields:
+
+- `name`                          → `packageName` (expected
+  `<vendor>/<name>`)
+- `type`                          → `packageType`
+- `description`                   → `packageDescription`
+- `extra.typo3/cms.extension-key` → `extensionKey`
+
+Note that `typo3/cms` is a single literal JSON object key containing
+a slash, not two nested keys.
+
+Composer metadata is purely additive: a missing sibling
+`composer.json`, an unreadable file, malformed JSON, a non-array root,
+or missing/non-string fields all yield empty strings. No issues are
+surfaced and read failures never affect the listing's exit code, so
+`--strict` continues to be driven exclusively by `ext_emconf.php`
+state. The composer reader still runs when `ext_emconf.php` itself
+fails to parse, so a broken `ext_emconf.php` next to a healthy
+`composer.json` still surfaces its package metadata.
 
 ### JSON shape
 
@@ -98,6 +122,12 @@ block:
       "createDirs": null,
       "unknownProperties": {}
     },
+    "composer": {
+      "extensionKey": "my_ext",
+      "packageName": "vendor/my_ext",
+      "packageType": "typo3-cms-extension",
+      "packageDescription": "An example extension."
+    },
     "validation": {
       "state": "SUCCESS",
       "isValid": true,
@@ -106,6 +136,12 @@ block:
   },
   "/abs/path/broken/ext_emconf.php": {
     "data": null,
+    "composer": {
+      "extensionKey": "broken",
+      "packageName": "vendor/broken",
+      "packageType": "typo3-cms-extension",
+      "packageDescription": "..."
+    },
     "validation": {
       "state": "FAILURE",
       "isValid": false,
@@ -119,6 +155,9 @@ block:
 
 `data` is `null` for files that failed to read; `isValid` is `false`
 exactly when `state` is `FAILURE` (warnings still count as valid).
+`composer` always carries the four string fields (empty strings when
+there is no readable sibling `composer.json` or when individual keys
+are missing).
 
 The keyed-by-path shape is designed for `jq` iteration. Examples:
 
@@ -130,6 +169,10 @@ pkw extemconf:list 'packages/**/ext_emconf.php' --json \
 # Print "<path>: <title> <version>" for each file:
 pkw extemconf:list 'packages/**/ext_emconf.php' --json \
   | jq -r 'to_entries[] | "\(.key): \(.value.data.title // "-") \(.value.data.version // "-")"'
+
+# Print "<path>: <extensionKey>[<packageName>] - <packageType>" for each file:
+pkw extemconf:list 'packages/**/ext_emconf.php' --json \
+  | jq -r 'to_entries[] | "\(.key): \(.value.composer.extensionKey)[\(.value.composer.packageName)] - \(.value.composer.packageType)"'
 ```
 
 ### Exit codes
