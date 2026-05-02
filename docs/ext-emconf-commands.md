@@ -1,7 +1,7 @@
 # ExtEmConf Console Commands
 
 This document covers the user-facing console commands that wrap the
-`SBReleaser\ExtEmConf\` services for batch operations on TYPO3
+`Packwright\ExtEmConf\` services for batch operations on TYPO3
 `ext_emconf.php` files. For the underlying object model and service
 contracts, see [`ext-emconf-architecture.md`](ext-emconf-architecture.md).
 
@@ -18,7 +18,7 @@ either as a table or as a JSON document.
 ### Usage
 
 ```
-sb-releaser extemconf:validate <paths...> [-t <version>] [--json] [-v]
+packwright extemconf:validate <paths...> [-t <version>] [--json] [-v]
 ```
 
 ### Arguments
@@ -94,7 +94,7 @@ written to disk; pass `--dry-run` to preview only.
 ### Usage
 
 ```
-sb-releaser extemconf:normalize <paths...> [-t <version>] [--dry-run] [--json] [-v]
+packwright extemconf:normalize <paths...> [-t <version>] [--dry-run] [--json] [-v]
 ```
 
 ### Arguments
@@ -167,31 +167,31 @@ shows what would have been written.
 ### Validate every fixture under a directory
 
 ```
-sb-releaser extemconf:validate packages/
+packwright extemconf:validate packages/
 ```
 
 ### Validate against TYPO3 v13 and emit JSON
 
 ```
-sb-releaser extemconf:validate packages/*/ext_emconf.php -t 13 --json | jq .summary
+packwright extemconf:validate packages/*/ext_emconf.php -t 13 --json | jq .summary
 ```
 
 ### Preview normalization without writing
 
 ```
-sb-releaser extemconf:normalize packages/my_ext/ext_emconf.php -t 12 --dry-run
+packwright extemconf:normalize packages/my_ext/ext_emconf.php -t 12 --dry-run
 ```
 
 ### Normalize in place
 
 ```
-sb-releaser extemconf:normalize packages/my_ext/ext_emconf.php -t 12
+packwright extemconf:normalize packages/my_ext/ext_emconf.php -t 12
 ```
 
 ### Pipe normalized source into another tool
 
 ```
-sb-releaser extemconf:normalize packages/my_ext/ext_emconf.php -t 13 --dry-run --json \
+packwright extemconf:normalize packages/my_ext/ext_emconf.php -t 13 --dry-run --json \
   | jq -r '.files[0].generated' \
   | tee /tmp/normalized.php
 ```
@@ -200,7 +200,7 @@ sb-releaser extemconf:normalize packages/my_ext/ext_emconf.php -t 13 --dry-run -
 
 ## Implementation notes
 
-- Both commands depend on `SBReleaser\ExtEmConf\Service\PathResolver` to
+- Both commands depend on `Packwright\ExtEmConf\Service\PathResolver` to
   resolve their arguments. The resolver returns a sorted, deduplicated
   list of absolute paths.
 - Read failures short-circuit per file: validate reports the read

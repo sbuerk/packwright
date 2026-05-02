@@ -1,6 +1,6 @@
 # ExtEmConf Subsystem — Architecture Reference
 
-This document describes the design of the `SBReleaser\ExtEmConf\` subsystem,
+This document describes the design of the `Packwright\ExtEmConf\` subsystem,
 which handles reading, validating, normalizing, and writing TYPO3
 `ext_emconf.php` files. It serves as both a human-readable design guide and
 a living lookup reference for future changes.
@@ -35,7 +35,7 @@ TYPO3 documentation references:
 ## Namespace Layout
 
 ```
-SBReleaser\ExtEmConf\
+Packwright\ExtEmConf\
   Dto\                         Data Transfer Objects (immutable, final readonly)
     ExtEmConf                  Root DTO — one instance per file
     Version                    Semver-aware version value object (Stringable)
