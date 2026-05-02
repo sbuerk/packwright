@@ -24,7 +24,8 @@
         "symfony/phpunit-bridge": "^7.4"
     },
     "bin": [
-        "bin/packwright"
+        "bin/packwright",
+        "bin/pkw"
     ],
     "autoload": {
         "psr-4": {

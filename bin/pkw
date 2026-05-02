@@ -1,0 +1,16 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use Packwright\Application;
+use Packwright\Kernel;
+
+$kernel = new Kernel(dirname(__DIR__));
+$container = $kernel->createContainer();
+
+/** @var Application $application */
+$application = $container->get(Application::class);
+exit($application->run());
