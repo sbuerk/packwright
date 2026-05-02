@@ -130,11 +130,21 @@ final class ExtEmConfWriter
      */
     private function constraintsToArray(Constraints $constraints): array
     {
-        return [
-            'depends' => $this->dependencyCollectionToArray($constraints->depends),
-            'conflicts' => $this->dependencyCollectionToArray($constraints->conflicts),
-            'suggests' => $this->dependencyCollectionToArray($constraints->suggests),
-        ];
+        $result = [];
+
+        if (!$constraints->depends->isEmpty()) {
+            $result['depends'] = $this->dependencyCollectionToArray($constraints->depends);
+        }
+
+        if (!$constraints->conflicts->isEmpty()) {
+            $result['conflicts'] = $this->dependencyCollectionToArray($constraints->conflicts);
+        }
+
+        if (!$constraints->suggests->isEmpty()) {
+            $result['suggests'] = $this->dependencyCollectionToArray($constraints->suggests);
+        }
+
+        return $result;
     }
 
     /**

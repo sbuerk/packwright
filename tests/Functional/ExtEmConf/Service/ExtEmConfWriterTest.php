@@ -431,4 +431,72 @@ final class ExtEmConfWriterTest extends TestCase
 
         self::assertStringNotContainsString("'autoload-dev'", $output);
     }
+
+    #[Test]
+    public function generateOmitsConstraintsDependsWhenEmpty(): void
+    {
+        $output = (new ExtEmConfWriter())->generate(new ExtEmConf(
+            title: 'Test',
+            description: 'Test.',
+            version: '1.0.0',
+            constraints: new Constraints(
+                suggests: new DependencyCollection([
+                    new Dependency(
+                        extensionKey: 'news',
+                        versionType: ConstraintVersionType::ALL,
+                        version: new AllVersions(),
+                    ),
+                ]),
+            ),
+        ));
+
+        self::assertStringContainsString("'suggests'", $output);
+        self::assertStringNotContainsString("'depends'", $output);
+        self::assertStringNotContainsString("'conflicts'", $output);
+    }
+
+    #[Test]
+    public function generateOmitsConstraintsSuggestsWhenEmpty(): void
+    {
+        $output = (new ExtEmConfWriter())->generate(new ExtEmConf(
+            title: 'Test',
+            description: 'Test.',
+            version: '1.0.0',
+            constraints: new Constraints(
+                depends: new DependencyCollection([
+                    new Dependency(
+                        extensionKey: 'typo3',
+                        versionType: ConstraintVersionType::VERSION,
+                        version: new SingleVersion(new Version(major: 13, minor: 4, patch: 0)),
+                    ),
+                ]),
+            ),
+        ));
+
+        self::assertStringContainsString("'depends'", $output);
+        self::assertStringNotContainsString("'suggests'", $output);
+        self::assertStringNotContainsString("'conflicts'", $output);
+    }
+
+    #[Test]
+    public function generateOmitsConstraintsConflictsWhenEmpty(): void
+    {
+        $output = (new ExtEmConfWriter())->generate(new ExtEmConf(
+            title: 'Test',
+            description: 'Test.',
+            version: '1.0.0',
+            constraints: new Constraints(
+                depends: new DependencyCollection([
+                    new Dependency(
+                        extensionKey: 'typo3',
+                        versionType: ConstraintVersionType::VERSION,
+                        version: new SingleVersion(new Version(major: 13, minor: 4, patch: 0)),
+                    ),
+                ]),
+            ),
+        ));
+
+        self::assertStringContainsString("'depends'", $output);
+        self::assertStringNotContainsString("'conflicts'", $output);
+    }
 }

@@ -13,8 +13,6 @@ $EM_CONF[$_EXTKEY] = [
         'depends' => [
             'typo3' => '8.7.0-13.4.99',
         ],
-        'conflicts' => [],
-        'suggests' => [],
     ],
     'clearCacheOnLoad' => true,
     'uploadfolder' => false,
