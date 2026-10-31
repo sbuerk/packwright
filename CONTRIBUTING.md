@@ -78,6 +78,15 @@ Run only functional (integration) tests:
 composer test:functional
 ```
 
+## Planning Changes
+
+New features and behaviour changes are planned with
+[OpenSpec](https://openspec.dev) before they are implemented, with or without a
+coding agent. Small fixes and maintenance work do not need it.
+
+See the [OpenSpec workflow guide](docs/openspec-workflow.md) for installation,
+when to use it, and the steps from proposal to pull request.
+
 ## Build
 
 The build produces self-contained PHAR binaries. Because the DI container
