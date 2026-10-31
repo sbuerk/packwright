@@ -11,6 +11,7 @@ not resolve `@` imports must read the files directly before starting work.
 - @CONTRIBUTING.md
 - @docs/ext-emconf-architecture.md
 - @docs/ext-emconf-commands.md
+- @docs/openspec-workflow.md
 
 ### Where to look up what
 
@@ -32,6 +33,9 @@ not resolve `@` imports must read the files directly before starting work.
 | Mutating command write gate | [Commands: Validation gate](docs/ext-emconf-commands.md#validation-gate) |
 | Autoload subcommand contract | [Commands: Autoload subcommands](docs/ext-emconf-commands.md#autoload-subcommands) |
 | CLI usage examples | [Commands: Examples](docs/ext-emconf-commands.md#examples) |
+| Planning a change, when to use OpenSpec | [OpenSpec: When to use it](docs/openspec-workflow.md#when-to-use-it) |
+| Propose, apply, and archive steps | [OpenSpec: The change lifecycle](docs/openspec-workflow.md#the-change-lifecycle) |
+| Agent rules for OpenSpec changes | [OpenSpec: Rules for coding agents](docs/openspec-workflow.md#rules-for-coding-agents) |
 
 ## Local gates
 
@@ -75,6 +79,13 @@ nearby code. In particular:
   class in the `ExtEmConf` subsystem is added, removed, or changes its contract.
   Update [`docs/ext-emconf-commands.md`](docs/ext-emconf-commands.md) when
   command arguments, options, exit codes, or JSON shapes change.
+
+## OpenSpec
+
+Larger changes are planned with OpenSpec. Follow
+[Rules for coding agents](docs/openspec-workflow.md#rules-for-coding-agents)
+whenever you work on an OpenSpec change. Above all, planning workflows never edit
+project code, and implementation starts only on an explicit request.
 
 ## Test conventions
 
